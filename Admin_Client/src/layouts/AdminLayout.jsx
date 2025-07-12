@@ -47,7 +47,7 @@ export default function AdminLayout({ children }) {
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -130,8 +130,8 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* Page content */}
-        <main className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
-          <div className="fade-in">
+        <main className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+          <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8 fade-in">
             {children}
           </div>
         </main>
