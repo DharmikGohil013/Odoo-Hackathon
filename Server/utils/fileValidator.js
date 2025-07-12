@@ -38,4 +38,81 @@ function fileValidator(req, res, next) {
   next();
 }
 
-module.exports = fileValidator;
+// File validation utilities
+const validateFile = (file) => {
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  const allowedMimeTypes = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf', 'text/plain', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+  ];
+
+  if (!file) {
+    return {
+      isValid: false,
+      error: 'No file provided'
+    };
+  }
+
+  if (file.size > maxSize) {
+    return {
+      isValid: false,
+      error: 'File size must be less than 10MB'
+    };
+  }
+
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    return {
+      isValid: false,
+      error: 'File type not supported'
+    };
+  }
+
+  return {
+    isValid: true
+  };
+};
+
+// Video validation
+const validateVideo = (file) => {
+  const maxSize = 50 * 1024 * 1024; // 50MB
+  const allowedMimeTypes = [
+    'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo',
+    'video/x-ms-wmv', 'video/x-flv', 'video/webm'
+  ];
+
+  if (!file) {
+    return {
+      isValid: false,
+      error: 'No video file provided'
+    };
+  }
+
+  if (file.size > maxSize) {
+    return {
+      isValid: false,
+      error: 'Video file size must be less than 50MB'
+    };
+  }
+
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    return {
+      isValid: false,
+      error: 'Video file type not supported'
+    };
+  }
+
+  return {
+    isValid: true
+  };
+};
+
+module.exports = {
+  fileValidator,
+  validateFile,
+  validateVideo
+};

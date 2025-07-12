@@ -10,8 +10,8 @@ const UserLayout = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      <main className="max-w-7xl mx-auto mt-5">
+        <div className=" sm:px-0 rounded-s-2xl">
           <Outlet />
         </div>
       </main>
@@ -20,7 +20,7 @@ const UserLayout = () => {
       
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto  ">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-500">
               © 2025 SkillSwap. All rights reserved.

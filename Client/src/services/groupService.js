@@ -119,6 +119,11 @@ class GroupService {
       throw error;
     }
   }
+
+  // Alias for getGroupDetails for better API consistency
+  async getGroup(groupId) {
+    return this.getGroupDetails(groupId);
+  }
 }
 
 export default new GroupService();

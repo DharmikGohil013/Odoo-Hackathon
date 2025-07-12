@@ -17,6 +17,10 @@ import RecommendationPage from '../pages/RecommendationPage';
 import MediaUploadPage from '../pages/MediaUploadPage';
 import NotFound from '../pages/NotFound';
 import AvatarTest from '../components/AvatarTest';
+import SkillLearningPage from '../pages/SkillLearningPage';
+import CanvasLearningPage from '../pages/CanvasLearningPage';
+import FileLearningPage from '../pages/FileLearningPage';
+import VideoLearningPage from '../pages/VideoLearningPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -90,6 +94,10 @@ const UserRoutes = () => {
         <Route path="recommendations" element={<RecommendationPage />} />
         <Route path="upload" element={<MediaUploadPage />} />
         <Route path="avatar-test" element={<AvatarTest />} />
+        <Route path="skill-learning" element={<SkillLearningPage />} />
+        <Route path="canvas-learning" element={<CanvasLearningPage />} />
+        <Route path="file-learning" element={<FileLearningPage />} />
+        <Route path="video-learning" element={<VideoLearningPage />} />
       </Route>
 
       {/* Catch all route */}

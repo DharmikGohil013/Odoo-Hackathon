@@ -1,4 +1,61 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
+
+// Create Toast Context
+const ToastContext = createContext();
+
+// Toast Provider Component
+export const ToastProvider = ({ children }) => {
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = (message, type = 'info', duration = 5000) => {
+    const id = Date.now() + Math.random();
+    const newToast = { id, message, type, duration };
+    
+    setToasts(prev => [...prev, newToast]);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+      removeToast(id);
+    }, duration);
+    
+    return id;
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
+  const showSuccess = (message) => addToast(message, 'success');
+  const showError = (message) => addToast(message, 'error');
+  const showWarning = (message) => addToast(message, 'warning');
+  const showInfo = (message) => addToast(message, 'info');
+
+  const value = {
+    toasts,
+    addToast,
+    removeToast,
+    showSuccess,
+    showError,
+    showWarning,
+    showInfo
+  };
+
+  return (
+    <ToastContext.Provider value={value}>
+      {children}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+    </ToastContext.Provider>
+  );
+};
+
+// Hook to use Toast Context
+export const useToast = () => {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return context;
+};
 
 const Toast = ({ message, type = 'info', duration = 5000, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -108,8 +165,8 @@ export const ToastContainer = ({ toasts, removeToast }) => {
   );
 };
 
-// Hook for managing toasts
-export const useToast = () => {
+// Hook for managing toasts (deprecated - use ToastProvider instead)
+export const useToastLegacy = () => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = (message, type = 'info', duration = 5000) => {
