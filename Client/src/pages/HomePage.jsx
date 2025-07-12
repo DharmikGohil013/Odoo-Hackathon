@@ -234,58 +234,74 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* Search and Filter Section */}
-        <div className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-md rounded-2xl p-6 mb-6 border border-white/30 dark:border-gray-700/30">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Discover Users</h2>
-            <div className="w-full md:w-96">
+        {/* All Users Section */}
+        <section className="home-panel">
+          <div className="home-panel-header">
+            <div className="home-panel-title">Discover Users</div>
+            <div>
               <SearchBar
                 onSearch={handleSearch}
                 placeholder="Search users, skills, locations..."
-                className="w-full px-4 py-2 bg-white/20 dark:bg-gray-800/20 backdrop-blur-md border border-white/30 dark:border-gray-700/30 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="home-searchbar"
               />
             </div>
           </div>
-        </div>
-
-        {/* Users Grid */}
-        <div className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-md rounded-2xl p-6 border border-white/30 dark:border-gray-700/30">
           {filteredUsers.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <div className="home-empty">
+              <div className="home-empty-icon">
+                <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <div className="home-empty-title">
                 {searchTerm ? 'No users found' : 'No users available'}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">
-                {searchTerm ? 'Try adjusting your search terms' : 'Check back soon for new users!'}
-              </p>
+              </div>
+              <div className="home-empty-desc">
+                {searchTerm ? 'No users match your search. Try something else!' : 'No public users yet. Check back soon!'}
+              </div>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="home-usergrid">
                 {currentUsers.map(user => (
-                  <div key={user._id} className="bg-white/30 dark:bg-gray-700/30 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-gray-600/20 hover:bg-white/40 dark:hover:bg-gray-700/40 transition-all duration-200 transform hover:scale-105">
+                  <div className="home-usercard-wrap" key={user._id}>
                     <UserCard user={user} />
                   </div>
                 ))}
               </div>
-              
               {totalPages > 1 && (
-                <div className="mt-8 flex justify-center">
-                  <div className="bg-white/30 dark:bg-gray-700/30 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-gray-600/20">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                      itemsPerPage={usersPerPage}
-                      totalItems={filteredUsers.length}
-                    />
-                  </div>
+                <div className="home-pagination-wrap">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    itemsPerPage={usersPerPage}
+                    totalItems={filteredUsers.length}
+                  />
                 </div>
               )}
             </>
           )}
-        </div>
+        </section>
+
+        {/* Quick Stats */}
+        <section className="home-stats-grid">
+          <div className="home-stats-card">
+            <div className="home-stats-value">{users.length}</div>
+            <div className="home-stats-label">Active Users</div>
+          </div>
+          <div className="home-stats-card">
+            <div className="home-stats-value">
+              {users.reduce((total, user) => total + (user.skills_offered?.length || 0), 0)}
+            </div>
+            <div className="home-stats-label">Skills Available</div>
+          </div>
+          <div className="home-stats-card">
+            <div className="home-stats-value">{recommendations.length}</div>
+            <div className="home-stats-label">Recommendations</div>
+          </div>
+        </section>
       </div>
     </div>
   );

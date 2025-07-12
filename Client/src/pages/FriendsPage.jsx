@@ -1,4 +1,3 @@
-// FriendsPage.jsx
 import React, { useState, useEffect } from 'react';
 import userService from '../services/userService';
 import UserCard from '../components/UserCard';
@@ -11,33 +10,9 @@ const FriendsPage = () => {
   const [filteredFriends, setFilteredFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const { user } = useAuth();
   const { showError } = useToast();
-
-  // Theme: Init
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
-    } else {
-      setIsDarkMode(systemPrefersDark);
-    }
-  }, []);
-
-  // Theme: Apply
-  useEffect(() => {
-    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
-  const toggleTheme = () => setIsDarkMode(d => !d);
 
   useEffect(() => { fetchFriends(); }, []);
   useEffect(() => { filterFriends(); }, [friends, searchTerm]);
@@ -88,58 +63,8 @@ const FriendsPage = () => {
   return (
     <div className="friends-root">
       <div className="friends-maxwidth">
-        {/* Navbar */}
-        <nav className="friends-navbar">
-          <div className="friends-navbar-content">
-            <div className="friends-navbar-left">
-              <div className="friends-logo">
-                <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <div>
-                <div className="friends-title">My Friends</div>
-                <div className="friends-subtitle">Connect and manage your network</div>
-              </div>
-            </div>
-            <div className="friends-navbar-right">
-              {/* Search Bar */}
-              <div className="friends-searchbar">
-                <span style={{ position: 'absolute', left: 13, top: 10, pointerEvents: 'none', color: 'var(--primary)', opacity: 0.5 }}>
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search friends..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
-              </div>
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className="friends-theme-toggle"
-                aria-label="Toggle theme"
-              >
-                {isDarkMode ? (
-                  <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-        </nav>
+        {/* Impressive Glassy Header */}
+        
 
         {/* Stats Cards */}
         <div className="friends-stats-grid">
