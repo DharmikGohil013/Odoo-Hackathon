@@ -149,10 +149,33 @@ const SwapStatusPage = () => {
         )}
 
         {request.status === 'accepted' && (
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
             <p className="text-sm text-green-600 font-medium">
-              ✅ Request accepted! You can now coordinate with the other user.
+              ✅ Request accepted! You can now start learning together.
             </p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => navigate('/canvas-learning')}
+                className="bg-purple-600 text-white px-3 py-2 rounded-md text-xs font-medium hover:bg-purple-700 transition-colors flex items-center justify-center space-x-1"
+              >
+                <span>🎨</span>
+                <span>Canvas</span>
+              </button>
+              <button
+                onClick={() => navigate('/file-learning')}
+                className="bg-blue-600 text-white px-3 py-2 rounded-md text-xs font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
+              >
+                <span>📁</span>
+                <span>Files</span>
+              </button>
+              <button
+                onClick={() => navigate('/video-learning')}
+                className="bg-red-600 text-white px-3 py-2 rounded-md text-xs font-medium hover:bg-red-700 transition-colors flex items-center justify-center space-x-1"
+              >
+                <span>🎥</span>
+                <span>Video</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
