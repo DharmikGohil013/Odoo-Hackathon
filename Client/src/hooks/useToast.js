@@ -20,10 +20,13 @@ export const useToast = () => {
   const warning = (message, duration) => addToast(message, 'warning', duration);
   const info = (message, duration) => addToast(message, 'info', duration);
 
+  const showToast = (message, type = 'info', duration) => addToast(message, type, duration);
+
   return {
     toasts,
     addToast,
     removeToast,
+    showToast,
     success,
     error,
     warning,

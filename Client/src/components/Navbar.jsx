@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../hooks/useAuth.js';
 import { 
   User, 
   LogOut, 
@@ -10,7 +10,10 @@ import {
   Users, 
   MessageSquare,
   Settings,
-  Bell
+  Bell,
+  RefreshCw,
+  UserPlus,
+  Star
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -32,9 +35,11 @@ const Navbar = () => {
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
+    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'Swap Requests', href: '/swap-status', icon: RefreshCw },
     { name: 'Friends', href: '/friends', icon: Users },
     { name: 'Groups', href: '/groups', icon: MessageSquare },
-    { name: 'Recommendations', href: '/recommendations', icon: Bell },
+    { name: 'Recommendations', href: '/recommendations', icon: Star },
   ];
 
   const isActivePath = (path) => {
@@ -48,16 +53,16 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg">
-                <MessageSquare className="h-6 w-6 text-white" />
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg">
+                <RefreshCw className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">SwapConnect</span>
+              <span className="text-xl font-bold text-gray-900">SkillSwap</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
           {isAuthenticated && (
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-6">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -66,8 +71,8 @@ const Navbar = () => {
                     to={item.href}
                     className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       isActivePath(item.href)
-                        ? 'text-blue-600 bg-blue-50'
-                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                        ? 'text-indigo-600 bg-indigo-50'
+                        : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -83,8 +88,11 @@ const Navbar = () => {
             {isAuthenticated ? (
               <>
                 {/* Notifications */}
-                <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors">
+                <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors relative">
                   <Bell className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    3
+                  </span>
                 </button>
 
                 {/* Profile Dropdown */}
@@ -93,7 +101,7 @@ const Navbar = () => {
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                     className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                       {user?.avatar ? (
                         <img
                           src={user.avatar}
@@ -104,21 +112,44 @@ const Navbar = () => {
                         <User className="h-4 w-4 text-white" />
                       )}
                     </div>
-                    <span className="hidden md:block text-sm font-medium text-gray-700">
-                      {user?.name || 'User'}
-                    </span>
+                    <div className="hidden md:block text-left">
+                      <div className="text-sm font-medium text-gray-700">
+                        {user?.name || 'User'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {user?.college || 'Student'}
+                      </div>
+                    </div>
                   </button>
 
                   {/* Profile Dropdown Menu */}
                   {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                        <p className="text-sm text-gray-500">{user?.email}</p>
+                        <div className="flex items-center mt-1">
+                          <Star className="h-3 w-3 text-yellow-400 mr-1" />
+                          <span className="text-xs text-gray-500">
+                            {user?.rating?.toFixed(1) || '0.0'} rating
+                          </span>
+                        </div>
+                      </div>
                       <Link
                         to="/profile"
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setIsProfileMenuOpen(false)}
                       >
                         <User className="h-4 w-4 mr-3" />
-                        Profile
+                        My Profile
+                      </Link>
+                      <Link
+                        to="/swap-status"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-3" />
+                        Swap Requests
                       </Link>
                       <Link
                         to="/settings"
@@ -144,13 +175,13 @@ const Navbar = () => {
               <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Sign in
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Sign up
                 </Link>
@@ -161,7 +192,7 @@ const Navbar = () => {
             {isAuthenticated && (
               <button
                 onClick={toggleMenu}
-                className="md:hidden p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100"
+                className="md:hidden p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-gray-100"
               >
                 {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
@@ -181,8 +212,8 @@ const Navbar = () => {
                     to={item.href}
                     className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-colors ${
                       isActivePath(item.href)
-                        ? 'text-blue-600 bg-blue-50'
-                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                        ? 'text-indigo-600 bg-indigo-50'
+                        : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'
                     }`}
                     onClick={() => setIsMenuOpen(false)}
                   >

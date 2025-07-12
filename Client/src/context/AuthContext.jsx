@@ -1,15 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
 
-const AuthContext = createContext();
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -22,14 +14,14 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('skillswap_token');
       if (token) {
         const userData = await authService.getCurrentUser();
         setUser(userData);
       }
     } catch (err) {
       console.error('Auth check failed:', err);
-      localStorage.removeItem('token');
+      localStorage.removeItem('skillswap_token');
     } finally {
       setLoading(false);
     }
@@ -41,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await authService.login(email, password);
       setUser(response.user);
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('skillswap_token', response.token);
       return { success: true };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Login failed';
@@ -58,7 +50,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await authService.register(userData);
       setUser(response.user);
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('skillswap_token', response.token);
       return { success: true };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Registration failed';
@@ -69,9 +61,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('token');
+    localStorage.removeItem('skillswap_token');
     setError(null);
   };
 
@@ -85,6 +81,7 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     register,
+    updateUser,
     logout,
     clearError,
     isAuthenticated: !!user

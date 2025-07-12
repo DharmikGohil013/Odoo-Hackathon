@@ -13,7 +13,7 @@ const api = axios.create({
 // Add token to requests if available
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('skillswap_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,7 +29,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('skillswap_token');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -55,13 +55,19 @@ export const authService = {
     return response.data;
   },
 
+  // Update user profile
+  updateProfile: async (profileData) => {
+    const response = await api.put('/auth/profile', profileData);
+    return response.data;
+  },
+
   // Logout user
   logout: async () => {
     try {
       await api.post('/auth/logout');
-      localStorage.removeItem('token');
+      localStorage.removeItem('skillswap_token');
     } catch (error) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('skillswap_token');
       throw error;
     }
   },
@@ -82,15 +88,25 @@ export const authService = {
   mockLogin: async (email, password) => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        if (email === 'demo@example.com' && password === 'password') {
+        if (email === 'demo@skillswap.com' && password === 'password') {
           resolve({
             user: {
               id: 1,
-              name: 'Demo User',
-              email: 'demo@example.com',
-              avatar: null
+              name: 'Alex Johnson',
+              email: 'demo@skillswap.com',
+              avatar: null,
+              college: 'MIT',
+              company: 'Google',
+              location: 'San Francisco, CA',
+              bio: 'Full-stack developer passionate about teaching and learning new technologies.',
+              skillsOffered: ['React', 'Node.js', 'Python', 'Machine Learning'],
+              skillsWanted: ['Go', 'Kubernetes', 'DevOps', 'System Design'],
+              rating: 4.8,
+              totalSwaps: 24,
+              isPublic: true,
+              joinedAt: '2024-01-15'
             },
-            token: 'mock-jwt-token'
+            token: 'mock-jwt-token-skillswap'
           });
         } else {
           reject(new Error('Invalid credentials'));
@@ -107,9 +123,19 @@ export const authService = {
             id: Math.random(),
             name: userData.name,
             email: userData.email,
-            avatar: null
+            avatar: null,
+            college: userData.college || '',
+            company: userData.company || '',
+            location: userData.location || '',
+            bio: '',
+            skillsOffered: [],
+            skillsWanted: [],
+            rating: 0,
+            totalSwaps: 0,
+            isPublic: true,
+            joinedAt: new Date().toISOString()
           },
-          token: 'mock-jwt-token'
+          token: 'mock-jwt-token-skillswap'
         });
       }, 1000);
     });

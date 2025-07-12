@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader, RefreshCw } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth.js';
 import { useToast } from '../hooks/useToast.js';
 import { ToastContainer } from '../components/Toast';
 
@@ -77,9 +77,9 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      // For demo purposes, use mock login if email is demo@example.com
+      // For demo purposes, use mock login if email is demo@skillswap.com
       let result;
-      if (formData.email === 'demo@example.com') {
+      if (formData.email === 'demo@skillswap.com') {
         // Mock successful login
         result = await new Promise((resolve) => {
           setTimeout(() => {
@@ -88,14 +88,14 @@ const LoginPage = () => {
         });
         
         // Set mock user data
-        localStorage.setItem('token', 'mock-jwt-token');
-        success('Welcome back! Login successful.');
+        localStorage.setItem('skillswap_token', 'mock-jwt-token-skillswap');
+        success('Welcome back to SkillSwap! Login successful.');
         navigate('/');
       } else {
         result = await login(formData.email, formData.password);
         
         if (result.success) {
-          success('Welcome back! Login successful.');
+          success('Welcome back to SkillSwap! Login successful.');
           navigate('/');
         }
       }
@@ -108,44 +108,44 @@ const LoginPage = () => {
 
   const handleDemoLogin = () => {
     setFormData({
-      email: 'demo@example.com',
+      email: 'demo@skillswap.com',
       password: 'password'
     });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
-            <Lock className="h-8 w-8 text-white" />
+          <div className="mx-auto h-16 w-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
+            <RefreshCw className="h-8 w-8 text-white" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back
+            Welcome back to SkillSwap
           </h2>
           <p className="text-gray-600">
-            Sign in to your SwapConnect account
+            Continue your skill exchange journey
           </p>
         </div>
 
         {/* Demo Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <Mail className="h-5 w-5 text-blue-400" />
+              <Mail className="h-5 w-5 text-indigo-400" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
+              <h3 className="text-sm font-medium text-indigo-800">
                 Demo Account
               </h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <p>Try the demo with: <code className="bg-blue-100 px-1 rounded">demo@example.com</code></p>
+              <div className="mt-2 text-sm text-indigo-700">
+                <p>Try the demo with: <code className="bg-indigo-100 px-1 rounded">demo@skillswap.com</code></p>
                 <button
                   onClick={handleDemoLogin}
-                  className="mt-2 text-blue-600 hover:text-blue-800 font-medium underline"
+                  className="mt-2 text-indigo-600 hover:text-indigo-800 font-medium underline"
                 >
                   Fill demo credentials
                 </button>
@@ -173,7 +173,7 @@ const LoginPage = () => {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
                     errors.email 
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                       : 'border-gray-300'
@@ -202,7 +202,7 @@ const LoginPage = () => {
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
                     errors.password 
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                       : 'border-gray-300'
@@ -234,7 +234,7 @@ const LoginPage = () => {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
                 Remember me
@@ -244,7 +244,7 @@ const LoginPage = () => {
             <div className="text-sm">
               <Link
                 to="/forgot-password"
-                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
               >
                 Forgot your password?
               </Link>
@@ -256,7 +256,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
             >
               {isLoading ? (
                 <>
@@ -265,7 +265,7 @@ const LoginPage = () => {
                 </>
               ) : (
                 <>
-                  Sign in
+                  Sign in to SkillSwap
                   <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
@@ -275,12 +275,12 @@ const LoginPage = () => {
           {/* Sign Up Link */}
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              New to SkillSwap?{' '}
               <Link
                 to="/register"
-                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
               >
-                Sign up for free
+                Create your account
               </Link>
             </p>
           </div>
@@ -290,14 +290,14 @@ const LoginPage = () => {
         <div className="mt-8">
           <div className="grid grid-cols-2 gap-4 text-center">
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-              <div className="text-2xl mb-2">🔒</div>
-              <h3 className="text-sm font-medium text-gray-900">Secure</h3>
-              <p className="text-xs text-gray-500">End-to-end encryption</p>
+              <div className="text-2xl mb-2">🎯</div>
+              <h3 className="text-sm font-medium text-gray-900">Smart Matching</h3>
+              <p className="text-xs text-gray-500">Find perfect skill partners</p>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-              <div className="text-2xl mb-2">⚡</div>
-              <h3 className="text-sm font-medium text-gray-900">Fast</h3>
-              <p className="text-xs text-gray-500">Lightning quick swaps</p>
+              <div className="text-2xl mb-2">🤝</div>
+              <h3 className="text-sm font-medium text-gray-900">Secure Swaps</h3>
+              <p className="text-xs text-gray-500">Safe skill exchanges</p>
             </div>
           </div>
         </div>
