@@ -3,12 +3,11 @@
   "style": "new-york",
   "rsc": false,
   "tsx": false,
-  "tailwind": {
-    "config": "",
-    "css": "src/index.css",
+  "css": {
+    "file": "src/index.css",
+    "framework": "custom-css",
     "baseColor": "neutral",
-    "cssVariables": true,
-    "prefix": ""
+    "cssVariables": true
   },
   "aliases": {
     "components": "@/components",
