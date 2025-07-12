@@ -9,6 +9,8 @@ const {
   uploadFile,
   getFile,
   downloadFile,
+  getDownloadUrl,
+  previewFile,
   deleteFile,
   getFilesByType,
   searchFiles,
@@ -38,7 +40,9 @@ router.get('/', getFiles);
 router.get('/search', searchFiles);
 router.get('/type/:type', getFilesByType);
 router.get('/:id', getFile);
+router.get('/:id/preview', previewFile);
 router.get('/:id/download', downloadFile);
+router.get('/:id/download-url', getDownloadUrl);
 
 // Protected routes
 router.use(authMiddleware);

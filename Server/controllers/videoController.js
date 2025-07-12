@@ -104,7 +104,7 @@ const uploadVideo = async (req, res) => {
       console.warn('Failed to cleanup temp file:', cleanupError.message);
     }
 
-    res.status(201).json({
+    res.status(201).json({ 
       success: true,
       message: 'Video uploaded successfully',
       data: savedVideo

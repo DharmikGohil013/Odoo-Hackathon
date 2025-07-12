@@ -52,25 +52,35 @@ const FileLearningPage = () => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      showError('File size must be less than 10MB');
+    // Validate file size (max 25MB)
+    if (file.size > 25 * 1024 * 1024) {
+      showError('File size must be less than 25MB');
       return;
     }
 
-    // Validate file type
+    // Validate file type - be more permissive to match server validation
     const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'application/pdf', 'text/plain', 'application/msword',
+      // Images
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp',
+      // Documents
+      'application/pdf', 'text/plain', 'text/csv', 'text/markdown',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      // Text and code files
+      'text/html', 'text/xml', 'application/json', 'text/javascript', 'text/css',
+      // Videos (for preview testing)
+      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+      // Audio
+      'audio/mpeg', 'audio/wav', 'audio/ogg'
     ];
 
+    console.log('Selected file type:', file.type);
     if (!allowedTypes.includes(file.type)) {
-      showError('File type not supported');
+      showError(`File type "${file.type}" not supported. Please choose a supported file format.`);
       return;
     }
 
@@ -98,24 +108,115 @@ const FileLearningPage = () => {
     }
   };
 
-  const handlePreview = (file) => {
-    setPreviewFile(file);
+  const handlePreview = async (file) => {
+    try {
+      console.log('Previewing file:', file);
+      console.log('File URL:', file.cloudinaryUrl);
+      console.log('File type:', file.type);
+      console.log('File mimetype:', file.mimetype);
+      
+      // First try to use the preview endpoint
+      try {
+        const response = await fileService.previewFile(file._id);
+        console.log('Preview endpoint response:', response);
+        const previewData = {
+          ...response.data,
+          url: response.data.previewUrl || response.data.cloudinaryUrl,
+          type: response.data.type
+        };
+        console.log('Using preview endpoint data:', previewData);
+        setPreviewFile(previewData);
+        return;
+      } catch (previewError) {
+        console.log('Preview endpoint failed, using fallback:', previewError.message);
+      }
+      
+      // Fallback to basic preview if endpoint fails
+      const previewData = {
+        ...file,
+        url: file.cloudinaryUrl,
+        type: file.type
+      };
+      console.log('Using fallback preview data:', previewData);
+      setPreviewFile(previewData);
+      
+    } catch (error) {
+      console.error('Preview error:', error);
+      showError('Failed to load file preview');
+    }
   };
 
   const handleDownload = async (fileId, filename) => {
     try {
-      const response = await fileService.downloadFile(fileId);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      showSuccess('File downloaded successfully');
+      console.log('Downloading file:', fileId, filename);
+      
+      // Try to get the download URL first
+      try {
+        const urlResponse = await fileService.getDownloadUrl(fileId);
+        const downloadData = urlResponse.data;
+        
+        console.log('Download data:', downloadData);
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = downloadData.downloadUrl;
+        link.download = downloadData.filename || filename || 'download';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showSuccess('Download started');
+        return;
+      } catch (urlError) {
+        console.log('Download URL endpoint failed, trying direct method:', urlError.message);
+      }
+      
+      // Fallback: Get file details and use cloudinary URL
+      try {
+        const fileResponse = await fileService.getFile(fileId);
+        const file = fileResponse.data;
+        
+        if (file.cloudinaryUrl) {
+          const link = document.createElement('a');
+          link.href = file.cloudinaryUrl;
+          link.download = filename || file.originalName || file.title;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          showSuccess('Download started');
+        } else {
+          throw new Error('No download URL available');
+        }
+      } catch (fileError) {
+        console.error('File details fetch failed:', fileError);
+        
+        // Last resort: try blob download
+        try {
+          const response = await fileService.downloadFile(fileId);
+          const blob = new Blob([response.data]);
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename || 'download';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          showSuccess('File downloaded successfully');
+        } catch (blobError) {
+          console.error('Blob download failed:', blobError);
+          showError('Download failed. Please try the direct download button (⬇️) or open in new tab.');
+        }
+      }
     } catch (error) {
-      showError('Failed to download file');
+      console.error('Download error:', error);
+      showError('Failed to download file. Please try opening the file in a new tab.');
     }
   };
 
@@ -137,6 +238,9 @@ const FileLearningPage = () => {
     if (mimeType.includes('word') || mimeType.includes('document')) return 'document';
     if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'spreadsheet';
     if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'presentation';
+    if (mimeType.startsWith('text/')) return 'text';
+    if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType.startsWith('audio/')) return 'audio';
     return 'other';
   };
 
@@ -147,6 +251,9 @@ const FileLearningPage = () => {
       case 'document': return '📝';
       case 'spreadsheet': return '📊';
       case 'presentation': return '📋';
+      case 'text': return '📄';
+      case 'video': return '🎥';
+      case 'audio': return '🎵';
       default: return '📁';
     }
   };
@@ -201,7 +308,7 @@ const FileLearningPage = () => {
                 type="file"
                 onChange={handleFileSelect}
                 className="w-full px-4 py-2 bg-white/20 dark:bg-gray-800/20 backdrop-blur-md border border-white/30 dark:border-gray-700/30 rounded-lg text-gray-900 dark:text-white"
-                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,video/*,audio/*"
               />
               {selectedFile && (
                 <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
@@ -242,6 +349,9 @@ const FileLearningPage = () => {
               <option value="document">Documents</option>
               <option value="spreadsheet">Spreadsheets</option>
               <option value="presentation">Presentations</option>
+              <option value="text">Text Files</option>
+              <option value="video">Videos</option>
+              <option value="audio">Audio</option>
               <option value="other">Other</option>
             </select>
           </div>
@@ -269,11 +379,22 @@ const FileLearningPage = () => {
                 </button>
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => handleDownload(file._id, file.title)}
+                    onClick={() => handleDownload(file._id, file.originalName || file.title)}
                     className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                   >
                     Download
                   </button>
+                  {/* Direct download link as backup */}
+                  <a
+                    href={file.cloudinaryUrl}
+                    download={file.originalName || file.title}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm text-center"
+                    title="Direct download"
+                  >
+                    ⬇️
+                  </a>
                   {file.uploadedBy?._id === user._id && (
                     <button
                       onClick={() => handleDelete(file._id)}
@@ -315,28 +436,226 @@ const FileLearningPage = () => {
               </div>
               <div className="p-4 overflow-auto max-h-[60vh]">
                 {previewFile.type === 'image' ? (
-                  <img
-                    src={previewFile.url}
-                    alt={previewFile.title}
-                    className="max-w-full max-h-full mx-auto rounded-lg"
-                  />
+                  <div className="text-center">
+                    <img
+                      src={previewFile.url}
+                      alt={previewFile.title}
+                      className="max-w-full max-h-full mx-auto rounded-lg"
+                      onLoad={() => console.log('Image loaded successfully')}
+                      onError={(e) => {
+                        console.error('Image failed to load:', previewFile.url);
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'block';
+                      }}
+                    />
+                    <div style={{ display: 'none' }} className="text-center py-8">
+                      <div className="text-4xl mb-4">🖼️</div>
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">Image preview failed to load</p>
+                      <a
+                        href={previewFile.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        Open Image in New Tab
+                      </a>
+                    </div>
+                  </div>
                 ) : previewFile.type === 'pdf' ? (
-                  <iframe
-                    src={previewFile.url}
-                    className="w-full h-96 rounded-lg"
-                    title={previewFile.title}
-                  />
+                  <div className="w-full">
+                    <div className="mb-4 text-center space-y-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        PDF Preview Options
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <a 
+                          href={previewFile.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                        >
+                          📖 Open in New Tab
+                        </a>
+                        <button
+                          onClick={() => handleDownload(previewFile._id, previewFile.originalName || previewFile.title)}
+                          className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                        >
+                          💾 Download
+                        </button>
+                        <button
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = `https://docs.google.com/viewer?url=${encodeURIComponent(previewFile.url)}`;
+                            link.target = '_blank';
+                            link.click();
+                          }}
+                          className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-colors"
+                        >
+                          📱 Google Viewer
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* PDF.js viewer - works better with cross-origin files */}
+                    <div className="relative mb-4">
+                      <iframe
+                        src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(previewFile.url)}`}
+                        className="w-full h-96 rounded-lg border border-gray-300"
+                        title={`${previewFile.title} - PDF.js Viewer`}
+                        onLoad={() => console.log('PDF.js viewer loaded')}
+                        onError={(e) => {
+                          console.error('PDF.js viewer failed');
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                      <div style={{ display: 'none' }} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
+                        {/* Fallback: Try Google Docs Viewer */}
+                        <iframe
+                          src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewFile.url)}&embedded=true`}
+                          className="w-full h-80 rounded border border-gray-300 mb-4"
+                          title={`${previewFile.title} - Google Docs Viewer`}
+                          onLoad={() => console.log('Google Docs viewer loaded as fallback')}
+                          onError={(e) => {
+                            console.error('Google Docs viewer also failed');
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                        <div style={{ display: 'none' }} className="text-center py-8">
+                          <div className="text-4xl mb-4">📄</div>
+                          <p className="text-gray-600 dark:text-gray-400 mb-4">PDF preview is not available</p>
+                          <p className="text-sm text-gray-500 mb-4">
+                            This may be due to browser security restrictions, CORS policies, or file hosting settings.
+                          </p>
+                          <div className="space-x-2">
+                            <a
+                              href={previewFile.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              Open PDF in New Tab
+                            </a>
+                            <button
+                              onClick={() => handleDownload(previewFile._id, previewFile.originalName || previewFile.title)}
+                              className="inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                              Download PDF
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Debug info */}
+                    <details className="mt-4">
+                      <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700">
+                        🔧 Debug Info
+                      </summary>
+                      <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+                        <p><strong>URL:</strong> {previewFile.url}</p>
+                        <p><strong>Type:</strong> {previewFile.type}</p>
+                        <p><strong>MIME:</strong> {previewFile.mimetype}</p>
+                        <p><strong>Size:</strong> {formatFileSize(previewFile.size)}</p>
+                      </div>
+                    </details>
+                  </div>
+                ) : previewFile.mimetype && previewFile.mimetype.startsWith('text/') ? (
+                  <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                    <div className="mb-2 text-center">
+                      <a
+                        href={previewFile.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors"
+                      >
+                        Open Text File in New Tab
+                      </a>
+                    </div>
+                    <iframe
+                      src={previewFile.url}
+                      className="w-full h-96 rounded border"
+                      title={previewFile.title}
+                      onLoad={() => console.log('Text file loaded successfully')}
+                      onError={() => console.error('Text file failed to load')}
+                    />
+                  </div>
+                ) : previewFile.type === 'video' || (previewFile.mimetype && previewFile.mimetype.startsWith('video/')) ? (
+                  <div className="w-full text-center">
+                    <video 
+                      controls 
+                      className="w-full max-h-96 rounded-lg mx-auto"
+                      preload="metadata"
+                      onLoadedMetadata={() => console.log('Video metadata loaded')}
+                      onError={() => console.error('Video failed to load')}
+                    >
+                      <source src={previewFile.url} type={previewFile.mimetype} />
+                      Your browser does not support the video tag.
+                    </video>
+                    <div className="mt-2">
+                      <a
+                        href={previewFile.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-indigo-600 hover:text-indigo-700"
+                      >
+                        Open Video in New Tab
+                      </a>
+                    </div>
+                  </div>
+                ) : previewFile.type === 'audio' || (previewFile.mimetype && previewFile.mimetype.startsWith('audio/')) ? (
+                  <div className="w-full text-center py-8">
+                    <div className="text-6xl mb-4">🎵</div>
+                    <audio 
+                      controls 
+                      className="w-full max-w-md mx-auto mb-4"
+                      preload="metadata"
+                      onLoadedMetadata={() => console.log('Audio metadata loaded')}
+                      onError={() => console.error('Audio failed to load')}
+                    >
+                      <source src={previewFile.url} type={previewFile.mimetype} />
+                      Your browser does not support the audio tag.
+                    </audio>
+                    <div>
+                      <a
+                        href={previewFile.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-indigo-600 hover:text-indigo-700"
+                      >
+                        Open Audio in New Tab
+                      </a>
+                    </div>
+                  </div>
                 ) : (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">{getFileIcon(previewFile.type)}</div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{previewFile.title}</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">Preview not available for this file type</p>
-                    <button
-                      onClick={() => handleDownload(previewFile._id, previewFile.title)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                      Download to View
-                    </button>
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-500">File type: {previewFile.mimetype}</p>
+                      <p className="text-sm text-gray-500">Size: {formatFileSize(previewFile.size)}</p>
+                      <p className="text-sm text-gray-500">URL: {previewFile.url ? 'Available' : 'Not Available'}</p>
+                    </div>
+                    <div className="mt-4 space-x-2">
+                      <button
+                        onClick={() => handleDownload(previewFile._id, previewFile.originalName || previewFile.title)}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        Download to View
+                      </button>
+                      {previewFile.url && (
+                        <a
+                          href={previewFile.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                        >
+                          Open in New Tab
+                        </a>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

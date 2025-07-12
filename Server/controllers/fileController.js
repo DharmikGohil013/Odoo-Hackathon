@@ -76,7 +76,14 @@ const uploadFile = async (req, res) => {
       resource_type: getResourceType(req.file.mimetype),
       public_id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       use_filename: true,
-      unique_filename: false
+      unique_filename: false,
+      // Add flags for better web compatibility
+      flags: 'attachment',
+      // For PDFs, try to optimize for web viewing
+      ...(req.file.mimetype === 'application/pdf' && {
+        pages: true, // Enable page extraction for PDFs
+        flags: 'progressive' // Better loading for web
+      })
     };
 
     console.log('Starting Cloudinary upload with options:', uploadOptions);
@@ -172,13 +179,49 @@ const downloadFile = async (req, res) => {
     file.downloads += 1;
     await file.save();
 
-    // Redirect to Cloudinary URL for download
+    // Set proper headers for download
+    res.setHeader('Content-Disposition', `attachment; filename="${file.originalName}"`);
+    res.setHeader('Content-Type', file.mimetype);
+    
+    // For direct file serving, redirect to Cloudinary URL
+    // This allows the browser to handle the download properly
     res.redirect(file.cloudinaryUrl);
   } catch (error) {
     console.error('Download file error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to download file'
+    });
+  }
+};
+
+// Get download URL
+const getDownloadUrl = async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+
+    if (!file) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found'
+      });
+    }
+
+    // Return the download URL and file info
+    res.status(200).json({
+      success: true,
+      data: {
+        downloadUrl: file.cloudinaryUrl,
+        filename: file.originalName,
+        mimetype: file.mimetype,
+        size: file.size
+      }
+    });
+  } catch (error) {
+    console.error('Get download URL error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get download URL'
     });
   }
 };
@@ -307,13 +350,64 @@ const getUserFiles = async (req, res) => {
   }
 };
 
+// Preview file
+const previewFile = async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+
+    if (!file) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found'
+      });
+    }
+
+    // For preview, we'll return the Cloudinary URL with proper headers
+    // This allows the frontend to properly embed the file
+    let previewUrl = file.cloudinaryUrl;
+    
+    // For PDFs, provide alternative preview options
+    if (file.type === 'pdf') {
+      // Try to get a PDF-optimized URL
+      const pdfUrl = file.cloudinaryUrl.replace('/upload/', '/upload/fl_progressive/');
+      previewUrl = pdfUrl;
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        ...file.toObject(),
+        previewUrl,
+        canPreview: ['image', 'pdf'].includes(file.type) || file.mimetype.startsWith('text/'),
+        // Provide multiple preview options for PDFs
+        ...(file.type === 'pdf' && {
+          previewOptions: {
+            direct: file.cloudinaryUrl,
+            progressive: file.cloudinaryUrl.replace('/upload/', '/upload/fl_progressive/'),
+            googleViewer: `https://docs.google.com/viewer?url=${encodeURIComponent(file.cloudinaryUrl)}`,
+            pdfjs: `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(file.cloudinaryUrl)}`
+          }
+        })
+      }
+    });
+  } catch (error) {
+    console.error('Preview file error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to preview file'
+    });
+  }
+};
+
 module.exports = {
   getFiles,
   uploadFile,
   getFile,
   downloadFile,
+  getDownloadUrl,
   deleteFile,
   getFilesByType,
   searchFiles,
-  getUserFiles
+  getUserFiles,
+  previewFile
 };

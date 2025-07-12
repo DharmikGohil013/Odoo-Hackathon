@@ -46,13 +46,16 @@ const validateFile = (file) => {
     'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff',
     // Documents
     'application/pdf',
-    'text/plain', 'text/csv',
+    'text/plain', 'text/csv', 'text/markdown', 'text/x-markdown',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.ms-powerpoint',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    // Text and code files
+    'text/html', 'text/xml', 'application/json', 'text/javascript', 'text/css',
+    'application/javascript', 'application/xml',
     // Archives
     'application/zip',
     'application/x-rar-compressed',
@@ -77,7 +80,7 @@ const validateFile = (file) => {
     console.log('Unsupported file type:', file.mimetype);
     return {
       isValid: false,
-      error: `File type ${file.mimetype} not supported. Supported types: PDF, images, documents, spreadsheets, presentations`
+      error: `File type ${file.mimetype} not supported. Supported types: PDF, images, documents, spreadsheets, presentations, text files, and code files`
     };
   }
 
