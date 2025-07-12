@@ -1,196 +1,224 @@
-import { useState } from 'react'
-import { 
-  useGetFeedbackQuery, 
-  useDeleteFeedbackMutation 
-} from '../store/api/adminApi'
+import { useState, useEffect } from 'react'
+import { adminApi } from '../services/adminService'
+import { LoadingTable, LoadingSpinner } from '../components/Loading'
 import { 
   MessageSquare, 
-  Star, 
-  User, 
-  Calendar, 
-  Trash2, 
-  Search,
-  Filter,
-  RefreshCw
+  Search, 
+  Filter, 
+  Star,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  TrendingUp,
+  Eye,
+  Archive
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function FeedbackPage() {
+  const [feedback, setFeedback] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRating, setFilterRating] = useState('all')
-  const { data: feedback, isLoading, error, refetch } = useGetFeedbackQuery()
-  const [deleteFeedback] = useDeleteFeedbackMutation()
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [selectedFeedback, setSelectedFeedback] = useState(null)
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [actionLoading, setActionLoading] = useState({})
 
-  const handleDeleteFeedback = async (feedbackId) => {
-    if (window.confirm('Are you sure you want to delete this feedback? This action cannot be undone.')) {
-      try {
-        await deleteFeedback(feedbackId).unwrap()
-        refetch()
-      } catch (error) {
-        console.error('Failed to delete feedback:', error)
-      }
+  useEffect(() => {
+    fetchFeedback()
+  }, [])
+
+  const fetchFeedback = async () => {
+    try {
+      setLoading(true)
+      const response = await adminApi.getAllFeedback()
+      setFeedback(response.data || [])
+    } catch (error) {
+      toast.error('Failed to fetch feedback')
+      console.error('Error fetching feedback:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const filteredFeedback = feedback?.filter(item => {
-    const matchesSearch = item.comment?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.reviewer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.reviewee?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    if (filterRating === 'all') return matchesSearch
-    return matchesSearch && item.rating === parseInt(filterRating)
-  }) || []
-
-  const averageRating = feedback?.length > 0 
-    ? (feedback.reduce((sum, item) => sum + item.rating, 0) / feedback.length).toFixed(1)
-    : 0
-
-  const ratingDistribution = {
-    1: feedback?.filter(item => item.rating === 1).length || 0,
-    2: feedback?.filter(item => item.rating === 2).length || 0,
-    3: feedback?.filter(item => item.rating === 3).length || 0,
-    4: feedback?.filter(item => item.rating === 4).length || 0,
-    5: feedback?.filter(item => item.rating === 5).length || 0,
+  const handleMarkAsResolved = async (feedbackId) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [`resolve_${feedbackId}`]: true }))
+      await adminApi.updateFeedback(feedbackId, { status: 'resolved' })
+      setFeedback(feedback.map(item => 
+        item.id === feedbackId ? { ...item, status: 'resolved' } : item
+      ))
+      toast.success('Feedback marked as resolved')
+    } catch (error) {
+      toast.error('Failed to update feedback')
+      console.error('Error updating feedback:', error)
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`resolve_${feedbackId}`]: false }))
+    }
   }
 
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, index) => (
+  const handleArchiveFeedback = async (feedbackId) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [`archive_${feedbackId}`]: true }))
+      await adminApi.updateFeedback(feedbackId, { status: 'archived' })
+      setFeedback(feedback.map(item => 
+        item.id === feedbackId ? { ...item, status: 'archived' } : item
+      ))
+      toast.success('Feedback archived')
+    } catch (error) {
+      toast.error('Failed to archive feedback')
+      console.error('Error archiving feedback:', error)
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`archive_${feedbackId}`]: false }))
+    }
+  }
+
+  const handleViewDetails = (feedbackItem) => {
+    setSelectedFeedback(feedbackItem)
+    setShowDetailModal(true)
+  }
+
+  const filteredFeedback = feedback.filter(item => {
+    const matchesSearch = item.message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    let matchesRating = true
+    if (filterRating !== 'all') {
+      const rating = parseInt(filterRating)
+      matchesRating = item.rating === rating
+    }
+
+    let matchesStatus = true
+    if (filterStatus !== 'all') {
+      matchesStatus = item.status === filterStatus
+    }
+    
+    return matchesSearch && matchesRating && matchesStatus
+  }) || []
+
+  const stats = {
+    total: feedback.length || 0,
+    pending: feedback.filter(item => item.status === 'pending').length || 0,
+    resolved: feedback.filter(item => item.status === 'resolved').length || 0,
+    averageRating: feedback.length > 0 
+      ? (feedback.reduce((sum, item) => sum + (item.rating || 0), 0) / feedback.length).toFixed(1)
+      : '0.0'
+  }
+
+  const getRatingStars = (rating) => {
+    return Array.from({ length: 5 }, (_, i) => (
       <Star
-        key={index}
+        key={i}
         className={`w-4 h-4 ${
-          index < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+          i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
         }`}
       />
     ))
   }
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'pending':
+        return <Clock className="w-4 h-4 text-yellow-500" />
+      case 'resolved':
+        return <CheckCircle className="w-4 h-4 text-green-500" />
+      case 'archived':
+        return <Archive className="w-4 h-4 text-gray-500" />
+      default:
+        return <AlertCircle className="w-4 h-4 text-gray-500" />
+    }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-600">Failed to load feedback. Please try again.</p>
-      </div>
-    )
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'resolved':
+        return 'bg-green-100 text-green-800'
+      case 'archived':
+        return 'bg-gray-100 text-gray-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Feedback Management</h1>
-          <p className="text-gray-600 mt-2">Monitor and manage user feedback and reviews</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">User Feedback</h1>
+          <p className="text-gray-600">Monitor and respond to user feedback and suggestions</p>
         </div>
-        <button 
-          onClick={refetch}
-          className="flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 mt-4 sm:mt-0"
+        <button
+          onClick={fetchFeedback}
+          className="mt-4 sm:mt-0 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
+          Refresh Data
         </button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Feedback</p>
-              <p className="text-3xl font-bold text-gray-900">{feedback?.length || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
             <MessageSquare className="w-8 h-8 text-blue-500" />
           </div>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Average Rating</p>
-              <div className="flex items-center mt-2">
-                <p className="text-3xl font-bold text-gray-900 mr-2">{averageRating}</p>
-                <div className="flex">
-                  {renderStars(Math.round(averageRating))}
-                </div>
-              </div>
+              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
             </div>
-            <Star className="w-8 h-8 text-yellow-500" />
+            <Clock className="w-8 h-8 text-yellow-500" />
           </div>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">This Month</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {feedback?.filter(item => {
-                  const feedbackDate = new Date(item.createdAt)
-                  const currentMonth = new Date().getMonth()
-                  return feedbackDate.getMonth() === currentMonth
-                }).length || 0}
-              </p>
+              <p className="text-sm font-medium text-gray-600">Resolved</p>
+              <p className="text-2xl font-bold text-green-600">{stats.resolved}</p>
             </div>
-            <Calendar className="w-8 h-8 text-green-500" />
+            <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
         </div>
-      </div>
-
-      {/* Rating Distribution */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
-        <div className="space-y-3">
-          {[5, 4, 3, 2, 1].map((rating) => (
-            <div key={rating} className="flex items-center">
-              <div className="flex items-center w-16">
-                <span className="text-sm text-gray-600 mr-2">{rating}</span>
-                <Star className="w-4 h-4 text-yellow-400 fill-current" />
-              </div>
-              <div className="flex-1 mx-4">
-                <div className="bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-yellow-400 h-2 rounded-full"
-                    style={{
-                      width: `${feedback?.length > 0 ? (ratingDistribution[rating] / feedback.length) * 100 : 0}%`
-                    }}
-                  ></div>
-                </div>
-              </div>
-              <span className="text-sm text-gray-600 w-8">{ratingDistribution[rating]}</span>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Avg Rating</p>
+              <p className="text-2xl font-bold text-purple-600">{stats.averageRating}</p>
             </div>
-          ))}
+            <TrendingUp className="w-8 h-8 text-purple-500" />
+          </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="flex items-center space-x-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search feedback..."
+                placeholder="Search feedback by message, user, or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            
+          </div>
+          <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Filter className="w-4 h-4 text-gray-400" />
               <select
@@ -206,75 +234,225 @@ export default function FeedbackPage() {
                 <option value="1">1 Star</option>
               </select>
             </div>
-          </div>
-          
-          <div className="text-sm text-gray-500">
-            Showing {filteredFeedback.length} of {feedback?.length || 0} feedback
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="resolved">Resolved</option>
+              <option value="archived">Archived</option>
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Feedback List */}
-      {filteredFeedback.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 text-center py-12">
-          <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">No feedback found matching your criteria</p>
-        </div>
+      {/* Feedback Table */}
+      {loading ? (
+        <LoadingTable rows={6} cols={6} />
       ) : (
-        <div className="space-y-4">
-          {filteredFeedback.map((item) => (
-            <div key={item._id} className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <User className="w-5 h-5 text-gray-400" />
-                        <span className="font-medium text-gray-900">
-                          {item.reviewer?.name || 'Anonymous'}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Feedback ({filteredFeedback.length})
+            </h2>
+          </div>
+          
+          {filteredFeedback.length === 0 ? (
+            <div className="p-12 text-center">
+              <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No feedback found</h3>
+              <p className="text-gray-500">No feedback matches your search criteria.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User & Message
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rating
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredFeedback.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {item.user_name || 'Anonymous User'}
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1 truncate max-w-md">
+                            {item.message}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {getRatingStars(item.rating || 0)}
+                          <span className="ml-2 text-sm text-gray-600">
+                            ({item.rating || 0})
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          {item.category || 'General'}
                         </span>
-                        <span className="text-gray-500">→</span>
-                        <span className="text-gray-700">
-                          {item.reviewee?.name || 'Unknown User'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full inline-flex items-center ${getStatusColor(item.status)}`}>
+                          {getStatusIcon(item.status)}
+                          <span className="ml-1 capitalize">{item.status || 'pending'}</span>
                         </span>
-                      </div>
-                      <div className="flex">
-                        {renderStars(item.rating)}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
-                        {formatDate(item.createdAt)}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteFeedback(item._id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete feedback"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => handleViewDetails(item)}
+                          className="text-blue-600 hover:text-blue-900 inline-flex items-center"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </button>
+                        {item.status !== 'resolved' && (
+                          <button
+                            onClick={() => handleMarkAsResolved(item.id)}
+                            disabled={actionLoading[`resolve_${item.id}`]}
+                            className="text-green-600 hover:text-green-900 inline-flex items-center disabled:opacity-50"
+                          >
+                            {actionLoading[`resolve_${item.id}`] ? (
+                              <LoadingSpinner size="sm" className="mr-1" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                            )}
+                            Resolve
+                          </button>
+                        )}
+                        {item.status !== 'archived' && (
+                          <button
+                            onClick={() => handleArchiveFeedback(item.id)}
+                            disabled={actionLoading[`archive_${item.id}`]}
+                            className="text-gray-600 hover:text-gray-900 inline-flex items-center disabled:opacity-50"
+                          >
+                            {actionLoading[`archive_${item.id}`] ? (
+                              <LoadingSpinner size="sm" className="mr-1" />
+                            ) : (
+                              <Archive className="w-4 h-4 mr-1" />
+                            )}
+                            Archive
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
-                  {/* Comment */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-gray-700">
-                      {item.comment || 'No comment provided'}
-                    </p>
-                  </div>
-
-                  {/* Swap Info */}
-                  {item.swap && (
-                    <div className="mt-4 text-sm text-gray-600">
-                      <span className="font-medium">Related to swap:</span>
-                      <span className="ml-1">#{item.swap._id?.slice(-8) || 'Unknown'}</span>
-                    </div>
-                  )}
-                </div>
+      {/* Feedback Detail Modal */}
+      {showDetailModal && selectedFeedback && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Feedback Details</h3>
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
               </div>
             </div>
-          ))}
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
+                <p className="text-gray-900">{selectedFeedback.user_name || 'Anonymous User'}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                <div className="flex items-center">
+                  {getRatingStars(selectedFeedback.rating || 0)}
+                  <span className="ml-2 text-sm text-gray-600">
+                    ({selectedFeedback.rating || 0}/5)
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                  {selectedFeedback.category || 'General'}
+                </span>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full inline-flex items-center ${getStatusColor(selectedFeedback.status)}`}>
+                  {getStatusIcon(selectedFeedback.status)}
+                  <span className="ml-1 capitalize">{selectedFeedback.status || 'pending'}</span>
+                </span>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedFeedback.message}</p>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Submitted</label>
+                <p className="text-gray-900">
+                  {new Date(selectedFeedback.created_at).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Close
+              </button>
+              {selectedFeedback.status !== 'resolved' && (
+                <button
+                  onClick={() => {
+                    handleMarkAsResolved(selectedFeedback.id)
+                    setShowDetailModal(false)
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Mark as Resolved
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

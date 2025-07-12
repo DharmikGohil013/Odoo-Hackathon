@@ -1,257 +1,342 @@
-import { useState } from 'react'
-import { 
-  useGetAnnouncementsQuery, 
-  usePostAnnouncementMutation 
-} from '../store/api/adminApi'
+import { useState, useEffect } from 'react'
+import { adminApi } from '../services/adminService'
+import { LoadingTable, LoadingSpinner } from '../components/Loading'
 import AnnouncementForm from '../components/AnnouncementForm'
 import { 
   Megaphone, 
-  Calendar, 
-  Eye, 
+  Search, 
+  Filter, 
   Plus, 
-  RefreshCw,
-  AlertCircle,
-  CheckCircle
+  Edit, 
+  Trash2,
+  Eye,
+  AlertTriangle,
+  Calendar,
+  Users,
+  Star
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function AnnouncementsPage() {
-  const [showForm, setShowForm] = useState(false)
-  const { data: announcements, isLoading, error, refetch } = useGetAnnouncementsQuery()
-  const [postAnnouncement, { isLoading: isPosting }] = usePostAnnouncementMutation()
+  const [announcements, setAnnouncements] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterImportant, setFilterImportant] = useState('all')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [actionLoading, setActionLoading] = useState({})
 
-  const handlePostAnnouncement = async (announcementData) => {
+  useEffect(() => {
+    fetchAnnouncements()
+  }, [])
+
+  const fetchAnnouncements = async () => {
     try {
-      await postAnnouncement(announcementData).unwrap()
-      setShowForm(false)
-      refetch()
+      setLoading(true)
+      const response = await adminApi.getAnnouncements()
+      setAnnouncements(response.data || [])
     } catch (error) {
-      console.error('Failed to post announcement:', error)
+      toast.error('Failed to fetch announcements')
+      console.error('Error fetching announcements:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  const getAnnouncementTypeColor = (type) => {
-    switch (type) {
-      case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'update':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'warning':
-        return 'bg-red-100 text-red-800 border-red-200'
-      case 'info':
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+  const handleCreateAnnouncement = async (announcementData) => {
+    try {
+      const response = await adminApi.createAnnouncement(announcementData)
+      setAnnouncements([response.data, ...announcements])
+      setShowCreateModal(false)
+      toast.success('Announcement created successfully')
+    } catch (error) {
+      toast.error('Failed to create announcement')
+      console.error('Error creating announcement:', error)
     }
   }
 
-  const getAnnouncementIcon = (type) => {
-    switch (type) {
-      case 'maintenance':
-        return <AlertCircle className="w-5 h-5" />
-      case 'update':
-        return <CheckCircle className="w-5 h-5" />
-      case 'warning':
-        return <AlertCircle className="w-5 h-5" />
-      case 'info':
-      default:
-        return <Megaphone className="w-5 h-5" />
+  const handleUpdateAnnouncement = async (announcementData) => {
+    try {
+      const response = await adminApi.updateAnnouncement(selectedAnnouncement.id, announcementData)
+      setAnnouncements(announcements.map(announcement => 
+        announcement.id === selectedAnnouncement.id ? response.data : announcement
+      ))
+      setShowEditModal(false)
+      setSelectedAnnouncement(null)
+      toast.success('Announcement updated successfully')
+    } catch (error) {
+      toast.error('Failed to update announcement')
+      console.error('Error updating announcement:', error)
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
+  const handleDeleteAnnouncement = async (announcementId) => {
+    if (!window.confirm('Are you sure you want to delete this announcement?')) return
+
+    try {
+      setActionLoading(prev => ({ ...prev, [`delete_${announcementId}`]: true }))
+      await adminApi.deleteAnnouncement(announcementId)
+      setAnnouncements(announcements.filter(announcement => announcement.id !== announcementId))
+      toast.success('Announcement deleted successfully')
+    } catch (error) {
+      toast.error('Failed to delete announcement')
+      console.error('Error deleting announcement:', error)
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`delete_${announcementId}`]: false }))
+    }
   }
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-600">Failed to load announcements. Please try again.</p>
-      </div>
-    )
+  const handleEditAnnouncement = (announcement) => {
+    setSelectedAnnouncement(announcement)
+    setShowEditModal(true)
+  }
+
+  const filteredAnnouncements = announcements.filter(announcement => {
+    const matchesSearch = announcement.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         announcement.content?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    if (filterImportant === 'all') return matchesSearch
+    if (filterImportant === 'important') return matchesSearch && announcement.is_important
+    if (filterImportant === 'normal') return matchesSearch && !announcement.is_important
+    
+    return matchesSearch
+  }) || []
+
+  const stats = {
+    total: announcements.length || 0,
+    important: announcements.filter(announcement => announcement.is_important).length || 0,
+    recent: announcements.filter(announcement => {
+      const createdDate = new Date(announcement.created_at)
+      const weekAgo = new Date()
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      return createdDate > weekAgo
+    }).length || 0
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Announcements</h1>
-          <p className="text-gray-600 mt-2">Create and manage platform-wide announcements</p>
-        </div>
-        <div className="flex items-center space-x-3 mt-4 sm:mt-0">
-          <button 
-            onClick={refetch}
-            className="flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </button>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 sm:mb-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Announcements</h1>
+            <p className="text-gray-600">Create and manage platform announcements</p>
+          </div>
           <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Announcement
-          </button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Announcements</p>
-              <p className="text-3xl font-bold text-gray-900">{announcements?.length || 0}</p>
-            </div>
-            <Megaphone className="w-8 h-8 text-blue-500" />
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">This Month</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {announcements?.filter(announcement => {
-                  const announcementDate = new Date(announcement.createdAt)
-                  const currentMonth = new Date().getMonth()
-                  return announcementDate.getMonth() === currentMonth
-                }).length || 0}
-              </p>
-            </div>
-            <Calendar className="w-8 h-8 text-green-500" />
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {announcements?.filter(announcement => announcement.isActive).length || 0}
-              </p>
-            </div>
-            <Eye className="w-8 h-8 text-purple-500" />
-          </div>
-        </div>
-      </div>
-
-      {/* Announcement Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <AnnouncementForm
-              onSubmit={handlePostAnnouncement}
-              onCancel={() => setShowForm(false)}
-              isLoading={isPosting}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Announcements List */}
-      {!announcements || announcements.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 text-center py-12">
-          <Megaphone className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No announcements yet</h3>
-          <p className="text-gray-500 mb-4">Create your first announcement to communicate with users</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Announcement
           </button>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {announcements.map((announcement) => (
-            <div key={announcement._id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              {/* Header */}
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getAnnouncementTypeColor(announcement.type)}`}>
-                        {getAnnouncementIcon(announcement.type)}
-                        <span className="ml-1 capitalize">{announcement.type || 'info'}</span>
-                      </span>
-                      {announcement.isActive && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Active
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {announcement.title || 'Untitled Announcement'}
-                    </h3>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {formatDate(announcement.createdAt)}
-                    </div>
-                  </div>
-                </div>
-              </div>
+      </div>
 
-              {/* Content */}
-              <div className="p-6">
-                <div className="prose max-w-none">
-                  <p className="text-gray-700 whitespace-pre-wrap">
-                    {announcement.message}
-                  </p>
-                </div>
-
-                {/* Metadata */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <div className="flex items-center space-x-6">
-                      {announcement.priority && (
-                        <div className="flex items-center">
-                          <span className="font-medium">Priority:</span>
-                          <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
-                            announcement.priority === 'high' ? 'bg-red-100 text-red-800' :
-                            announcement.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {announcement.priority.charAt(0).toUpperCase() + announcement.priority.slice(1)}
-                          </span>
-                        </div>
-                      )}
-                      {announcement.expiresAt && (
-                        <div className="flex items-center">
-                          <span className="font-medium">Expires:</span>
-                          <span className="ml-2">{formatDate(announcement.expiresAt)}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center space-x-4">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium">
-                        Edit
-                      </button>
-                      <button className="text-red-600 hover:text-red-800 font-medium">
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Announcements</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-          ))}
+            <Megaphone className="w-8 h-8 text-blue-500" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Important</p>
+              <p className="text-2xl font-bold text-orange-600">{stats.important}</p>
+            </div>
+            <Star className="w-8 h-8 text-orange-500" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">This Week</p>
+              <p className="text-2xl font-bold text-green-600">{stats.recent}</p>
+            </div>
+            <Calendar className="w-8 h-8 text-green-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search announcements by title or content..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <select
+              value={filterImportant}
+              onChange={(e) => setFilterImportant(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Announcements</option>
+              <option value="important">Important Only</option>
+              <option value="normal">Normal Only</option>
+            </select>
+          </div>
+          <button
+            onClick={fetchAnnouncements}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Announcements Table */}
+      {loading ? (
+        <LoadingTable rows={6} cols={5} />
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Announcements ({filteredAnnouncements.length})
+            </h2>
+          </div>
+          
+          {filteredAnnouncements.length === 0 ? (
+            <div className="p-12 text-center">
+              <Megaphone className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No announcements found</h3>
+              <p className="text-gray-500">No announcements match your search criteria.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Announcement
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Priority
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Author
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredAnnouncements.map((announcement) => (
+                    <tr key={announcement.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="flex items-center">
+                            <div className="text-sm font-medium text-gray-900 flex items-center">
+                              {announcement.is_important && (
+                                <Star className="w-4 h-4 text-orange-500 mr-2" />
+                              )}
+                              {announcement.title}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1 truncate max-w-md">
+                            {announcement.content}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          announcement.is_important 
+                            ? 'bg-orange-100 text-orange-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {announcement.is_important ? 'Important' : 'Normal'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{announcement.author || 'Admin'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(announcement.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => handleEditAnnouncement(announcement)}
+                          className="text-blue-600 hover:text-blue-900 inline-flex items-center"
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAnnouncement(announcement.id)}
+                          disabled={actionLoading[`delete_${announcement.id}`]}
+                          className="text-red-600 hover:text-red-900 inline-flex items-center disabled:opacity-50"
+                        >
+                          {actionLoading[`delete_${announcement.id}`] ? (
+                            <LoadingSpinner size="sm" className="mr-1" />
+                          ) : (
+                            <Trash2 className="w-4 h-4 mr-1" />
+                          )}
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Create Announcement Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Create New Announcement</h3>
+            </div>
+            
+            <AnnouncementForm
+              onSubmit={handleCreateAnnouncement}
+              onCancel={() => setShowCreateModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Edit Announcement Modal */}
+      {showEditModal && selectedAnnouncement && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Edit Announcement</h3>
+            </div>
+            
+            <AnnouncementForm
+              initialData={selectedAnnouncement}
+              onSubmit={handleUpdateAnnouncement}
+              onCancel={() => {
+                setShowEditModal(false)
+                setSelectedAnnouncement(null)
+              }}
+            />
+          </div>
         </div>
       )}
     </div>
