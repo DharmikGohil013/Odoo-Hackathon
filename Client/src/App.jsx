@@ -8,7 +8,11 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="App">
+        <div className="min-h-screen bg-gray-50">
+          {/* Test banner to verify Tailwind CSS is working */}
+          <div className="bg-red-500 text-white p-4 text-center font-bold">
+            🎨 Tailwind CSS Test - If you see red background, CSS is working!
+          </div>
           <UserRoutes />
         </div>
       </AuthProvider>

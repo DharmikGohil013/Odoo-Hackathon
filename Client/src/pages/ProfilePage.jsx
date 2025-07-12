@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import userService from '../services/userService';
 import mediaService from '../services/mediaService';
 import { useToast } from '../components/Toast';
+import Avatar from '../components/Avatar';
 
 const ProfilePage = () => {
   const { user, updateUserProfile } = useAuth();
@@ -137,11 +138,7 @@ const ProfilePage = () => {
             {/* Profile Photo Section */}
             <div className="flex items-center space-x-6">
               <div className="relative">
-                <img
-                  className="h-24 w-24 rounded-full object-cover"
-                  src={user?.profile_photo || '/default-avatar.png'}
-                  alt={user?.name}
-                />
+                <Avatar user={user} size="lg" />
                 {uploading && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>

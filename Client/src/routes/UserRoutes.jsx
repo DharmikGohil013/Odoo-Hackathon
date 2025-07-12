@@ -16,6 +16,7 @@ import GroupDetailPage from '../pages/GroupDetailPage';
 import RecommendationPage from '../pages/RecommendationPage';
 import MediaUploadPage from '../pages/MediaUploadPage';
 import NotFound from '../pages/NotFound';
+import AvatarTest from '../components/AvatarTest';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -88,6 +89,7 @@ const UserRoutes = () => {
         <Route path="groups/:groupId" element={<GroupDetailPage />} />
         <Route path="recommendations" element={<RecommendationPage />} />
         <Route path="upload" element={<MediaUploadPage />} />
+        <Route path="avatar-test" element={<AvatarTest />} />
       </Route>
 
       {/* Catch all route */}

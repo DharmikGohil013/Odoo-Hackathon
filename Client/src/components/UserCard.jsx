@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import userService from '../services/userService';
 import { useAuth } from '../context/AuthContext.jsx';
+import Avatar from './Avatar';
 
 const UserCard = ({ user, showActions = true }) => {
   const { user: currentUser } = useAuth();
@@ -54,11 +55,7 @@ const UserCard = ({ user, showActions = true }) => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="p-6">
         <div className="flex items-center space-x-4">
-          <img
-            className="h-16 w-16 rounded-full object-cover"
-            src={user.profile_photo || '/default-avatar.png'}
-            alt={user.name}
-          />
+          <Avatar user={user} size="md" />
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-medium text-gray-900 truncate">
               {user.name}

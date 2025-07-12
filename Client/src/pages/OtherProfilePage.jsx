@@ -5,6 +5,7 @@ import swapService from '../services/swapService';
 import feedbackService from '../services/feedbackService';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/Toast';
+import Avatar from '../components/Avatar';
 
 const OtherProfilePage = () => {
   const { userId } = useParams();
@@ -87,11 +88,7 @@ const OtherProfilePage = () => {
         {/* Header */}
         <div className="px-6 py-8 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
           <div className="flex items-center space-x-6">
-            <img
-              className="h-24 w-24 rounded-full border-4 border-white object-cover"
-              src={user.profile_photo || '/default-avatar.png'}
-              alt={user.name}
-            />
+            <Avatar user={user} size="lg" className="border-4 border-white" />
             <div className="flex-1">
               <h1 className="text-3xl font-bold">{user.name}</h1>
               <p className="text-blue-100">{user.email}</p>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import swapService from '../services/swapService';
 import { useToast } from '../components/Toast';
 import { formatDateTime } from '../utils/formatDate';
+import Avatar from '../components/Avatar';
 
 const SwapStatusPage = () => {
   const [incomingRequests, setIncomingRequests] = useState([]);
@@ -81,10 +82,9 @@ const SwapStatusPage = () => {
     <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center space-x-4">
-          <img
-            className="h-12 w-12 rounded-full object-cover"
-            src={request.from_user?.profile_photo || request.to_user?.profile_photo || '/default-avatar.png'}
-            alt="User"
+          <Avatar 
+            user={type === 'incoming' ? request.from_user : request.to_user} 
+            size="md" 
           />
           <div>
             <h3 className="text-lg font-medium text-gray-900">

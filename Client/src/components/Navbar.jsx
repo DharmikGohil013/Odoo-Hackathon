@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import Avatar from './Avatar';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -48,11 +49,7 @@ const Navbar = () => {
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   <div className="flex items-center space-x-3">
-                    <img
-                      className="h-8 w-8 rounded-full"
-                      src={user?.profile_photo || '/default-avatar.png'}
-                      alt={user?.name}
-                    />
+                    <Avatar user={user} size="sm" />
                     <div className="hidden md:block">
                       <div className="text-sm font-medium">{user?.name}</div>
                       <div className="text-xs text-blue-200">{user?.email}</div>
