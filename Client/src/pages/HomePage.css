@@ -239,6 +239,21 @@
 @media (max-width: 600px) {
   .home-pagination-wrap { margin-top: 20px; }
 }
+/* User List (Vertical Layout) */
+.home-userlist {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.home-usercard-wrap {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.home-usercard-wrap:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(106,89,255,0.15);
+}
 
 /* Stats Grid */
 .home-stats-grid {

@@ -136,56 +136,56 @@ const HomePage = () => {
           </section>
         )}
 
-        {/* All Users Section */}
-        <section className="home-panel">
-          <div className="home-panel-header">
-            <div className="home-panel-title">Discover Users</div>
-            <div>
-              <SearchBar
-                onSearch={handleSearch}
-                placeholder="Search users, skills, locations..."
-                className="home-searchbar"
-              />
-            </div>
+       {/* All Users Section */}
+<section className="home-panel">
+  <div className="home-panel-header">
+    <div className="home-panel-title">Discover Users</div>
+    <div>
+      <SearchBar
+        onSearch={handleSearch}
+        placeholder="Search users, skills, locations..."
+        className="home-searchbar"
+      />
+    </div>
+  </div>
+  {filteredUsers.length === 0 ? (
+    <div className="home-empty">
+      <div className="home-empty-icon">
+        <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <div className="home-empty-title">
+        {searchTerm ? 'No users found' : 'No users available'}
+      </div>
+      <div className="home-empty-desc">
+        {searchTerm ? 'No users match your search. Try something else!' : 'No public users yet. Check back soon!'}
+      </div>
+    </div>
+  ) : (
+    <>
+      <div className="home-userlist">
+        {currentUsers.map(user => (
+          <div className="home-usercard-wrap" key={user._id}>
+            <UserCard user={user} />
           </div>
-          {filteredUsers.length === 0 ? (
-            <div className="home-empty">
-              <div className="home-empty-icon">
-                <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <div className="home-empty-title">
-                {searchTerm ? 'No users found' : 'No users available'}
-              </div>
-              <div className="home-empty-desc">
-                {searchTerm ? 'No users match your search. Try something else!' : 'No public users yet. Check back soon!'}
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="home-usergrid">
-                {currentUsers.map(user => (
-                  <div className="home-usercard-wrap" key={user._id}>
-                    <UserCard user={user} />
-                  </div>
-                ))}
-              </div>
-              {totalPages > 1 && (
-                <div className="home-pagination-wrap">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                    itemsPerPage={usersPerPage}
-                    totalItems={filteredUsers.length}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </section>
+        ))}
+      </div>
+      {totalPages > 1 && (
+        <div className="home-pagination-wrap">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={usersPerPage}
+            totalItems={filteredUsers.length}
+          />
+        </div>
+      )}
+    </>
+  )}
+</section>
 
         {/* Quick Stats */}
         <section className="home-stats-grid">
