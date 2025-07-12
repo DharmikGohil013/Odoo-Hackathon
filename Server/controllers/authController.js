@@ -4,7 +4,7 @@ const User = require('../models/User');
 
 require('dotenv').config();
 
-// Generate JWT
+// Helper to generate JWT token
 const generateToken = (user) => {
   return jwt.sign(
     {
@@ -17,7 +17,7 @@ const generateToken = (user) => {
 };
 
 // @route   POST /api/auth/register
-exports.registerUser = async (req, res) => {
+exports.register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
@@ -25,8 +25,10 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(409).json({ message: 'Email already in use' });
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(409).json({ message: 'Email already in use' });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -34,7 +36,7 @@ exports.registerUser = async (req, res) => {
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
-      role: role === 'admin' ? 'admin' : 'user', // Only allow admin manually or through DB
+      role: role === 'admin' ? 'admin' : 'user', // Only allow admin via DB or manual process
     });
 
     const token = generateToken(newUser);
@@ -55,7 +57,7 @@ exports.registerUser = async (req, res) => {
 };
 
 // @route   POST /api/auth/login
-exports.loginUser = async (req, res) => {
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -84,6 +86,17 @@ exports.loginUser = async (req, res) => {
         is_banned: user.is_banned,
       },
     });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// @route   GET /api/auth/me
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
