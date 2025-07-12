@@ -186,7 +186,7 @@ const HomePage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                 </div>
-                <div>
+Active Users                <div>
                   <h3 className="text-xl font-semibold mb-1">Make a Swap Request</h3>
                   <p className="text-white/80">Find someone to exchange skills with</p>
                 </div>
