@@ -1,34 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import AdminLayout from './layouts/AdminLayout'
+import LoginPage from './pages/LoginPage'
+import Dashboard from './pages/Dashboard'
+import UsersManagement from './pages/UsersManagement'
+import SkillsModeration from './pages/SkillsModeration'
+import FeedbackPage from './pages/FeedbackPage'
+import AnnouncementsPage from './pages/AnnouncementsPage'
+import SwapMonitor from './pages/SwapMonitor'
+import ReportsPage from './pages/ReportsPage'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
+
+  if (!isAuthenticated) {
+    return <LoginPage />
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <AdminLayout>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/users" element={<UsersManagement />} />
+        <Route path="/skills" element={<SkillsModeration />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
+        <Route path="/announcements" element={<AnnouncementsPage />} />
+        <Route path="/swaps" element={<SwapMonitor />} />
+        <Route path="/reports" element={<ReportsPage />} />
+      </Routes>
+    </AdminLayout>
   )
 }
 
