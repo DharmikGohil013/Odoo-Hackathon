@@ -226,82 +226,67 @@ const HomePage = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendations.slice(0, 3).map(user => (
-                <div key={user._id} className="bg-white/30 dark:bg-gray-700/30 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-gray-600/20 hover:bg-white/40 dark:hover:bg-gray-700/40 transition-all duration-200">
-                  <UserCard user={user} />
-                </div>
+                <UserCard key={user._id} user={user} />
               ))}
             </div>
           </div>
         )}
 
         {/* All Users Section */}
-        <section className="home-panel">
-          <div className="home-panel-header">
-            <div className="home-panel-title">Discover Users</div>
+        <div className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-md rounded-2xl p-8 mb-8 border border-white/30 dark:border-gray-700/30">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Discover Amazing People</h2>
+              <p className="text-gray-600 dark:text-gray-400">Connect with skilled individuals ready to share knowledge</p>
+            </div>
+            <div className="w-full sm:w-auto">
               <SearchBar
                 onSearch={handleSearch}
                 placeholder="Search users, skills, locations..."
-                className="home-searchbar"
+                className="w-full sm:w-80"
               />
             </div>
           </div>
+          
           {filteredUsers.length === 0 ? (
-            <div className="home-empty">
-              <div className="home-empty-icon">
-                <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="text-white">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <div className="home-empty-title">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                 {searchTerm ? 'No users found' : 'No users available'}
-              </div>
-              <div className="home-empty-desc">
-                {searchTerm ? 'No users match your search. Try something else!' : 'No public users yet. Check back soon!'}
-              </div>
+              </h3>
+              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                {searchTerm ? 'No users match your search. Try different keywords!' : 'No public users yet. Check back soon for exciting connections!'}
+              </p>
             </div>
           ) : (
             <>
-              <div className="home-usergrid">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                 {currentUsers.map(user => (
-                  <div className="home-usercard-wrap" key={user._id}>
-                    <UserCard user={user} />
-                  </div>
+                  <UserCard key={user._id} user={user} />
                 ))}
               </div>
               {totalPages > 1 && (
-                <div className="home-pagination-wrap">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                    itemsPerPage={usersPerPage}
-                    totalItems={filteredUsers.length}
-                  />
+                <div className="flex justify-center">
+                  <div className="bg-white/30 dark:bg-gray-700/30 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-gray-600/20">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                      itemsPerPage={usersPerPage}
+                      totalItems={filteredUsers.length}
+                    />
+                  </div>
                 </div>
               )}
             </>
           )}
-        </section>
+        </div>
 
-        {/* Quick Stats */}
-        <section className="home-stats-grid">
-          <div className="home-stats-card">
-            <div className="home-stats-value">{users.length}</div>
-            <div className="home-stats-label">Active Users</div>
-          </div>
-          <div className="home-stats-card">
-            <div className="home-stats-value">
-              {users.reduce((total, user) => total + (user.skills_offered?.length || 0), 0)}
-            </div>
-            <div className="home-stats-label">Skills Available</div>
-          </div>
-          <div className="home-stats-card">
-            <div className="home-stats-value">{recommendations.length}</div>
-            <div className="home-stats-label">Recommendations</div>
-          </div>
-        </section>
       </div>
     </div>
   );

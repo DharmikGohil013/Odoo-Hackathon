@@ -32,9 +32,11 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <h1 className="text-xl font-bold">SkillSwap</h1>
+              <h1 className="text-4xl font-extrabold text-white drop-shadow-lg tracking-tight mb-2">
+                Learn<span className="text-yellow-300">Link</span>
+              </h1>
             </Link>
-            
+
             {isAuthenticated && (
               <div className="hidden md:block ml-10">
                 <div className="flex items-baseline space-x-4">
@@ -72,7 +74,7 @@ const Navbar = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="relative group">
                   <button className="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
                     Menu ▼

@@ -23,6 +23,8 @@ const GroupDetailPage = () => {
   const [replyTo, setReplyTo] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
   const [editContent, setEditContent] = useState('');
+  const [joiningGroup, setJoiningGroup] = useState(false);
+  const [leavingGroup, setLeavingGroup] = useState(false);
   
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -250,6 +252,38 @@ const GroupDetailPage = () => {
     return isMember;
   };
 
+  const handleJoinGroup = async () => {
+    try {
+      setJoiningGroup(true);
+      await groupService.joinGroup(groupId);
+      await fetchGroupDetails(); // Refresh group data to update membership
+      showSuccess('Successfully joined the group!');
+    } catch (error) {
+      console.error('Error joining group:', error);
+      showError('Failed to join group: ' + error.message);
+    } finally {
+      setJoiningGroup(false);
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!window.confirm('Are you sure you want to leave this group? You will lose access to all group messages.')) {
+      return;
+    }
+
+    try {
+      setLeavingGroup(true);
+      await groupService.leaveGroup(groupId);
+      showSuccess('Successfully left the group');
+      navigate('/groups'); // Redirect to groups page after leaving
+    } catch (error) {
+      console.error('Error leaving group:', error);
+      showError('Failed to leave group: ' + error.message);
+    } finally {
+      setLeavingGroup(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-indigo-900 dark:to-purple-900 transition-colors duration-500">
@@ -331,6 +365,59 @@ const GroupDetailPage = () => {
                     Chat Active
                   </span>
                 </div>
+              </div>
+            </div>
+            
+            {/* Join/Leave Group Button */}
+            <div className="flex flex-col items-end space-y-2">
+              {isGroupMember() ? (
+                <button
+                  onClick={handleLeaveGroup}
+                  disabled={leavingGroup}
+                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center space-x-2"
+                >
+                  {leavingGroup ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Leaving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      <span>Exit Group</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleJoinGroup}
+                  disabled={joiningGroup}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center space-x-2"
+                >
+                  {joiningGroup ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Joining...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      </svg>
+                      <span>Join Group</span>
+                    </>
+                  )}
+                </button>
+              )}
+              
+              {/* Membership Status Indicator */}
+              <div className="flex items-center space-x-2 text-sm">
+                <div className={`w-2 h-2 rounded-full ${isGroupMember() ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                <span className="text-gray-600 dark:text-gray-400">
+                  {isGroupMember() ? 'Member' : 'Not a member'}
+                </span>
               </div>
             </div>
           </div>
