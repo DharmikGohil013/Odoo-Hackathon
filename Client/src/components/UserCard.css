@@ -1,0 +1,226 @@
+:root {
+  --ucard-bg: rgba(255,255,255,0.88);
+  --ucard-bg-dark: rgba(37,41,64,0.9);
+  --ucard-border: rgba(80,110,255,0.12);
+  --ucard-shadow: 0 7px 32px 0 rgba(80,99,255,0.11);
+  --ucard-radius: 1.5rem;
+  --ucard-primary: #5c6fff;
+  --ucard-green: #16a34a;
+  --ucard-blue: #4f46e5;
+  --ucard-red: #ef4444;
+  --ucard-purple: #a471ff;
+}
+
+.ucard-root {
+  background: var(--ucard-bg);
+  border-radius: var(--ucard-radius);
+  box-shadow: var(--ucard-shadow);
+  border: 1.5px solid var(--ucard-border);
+  transition: box-shadow 0.18s, border 0.22s, background 0.4s;
+  margin-bottom: 0;
+  margin-top: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+.ucard-root:hover {
+  box-shadow: 0 18px 54px 0 rgba(100,90,255,0.13), 0 2px 6px 0 rgba(0,0,0,0.03);
+  border-color: #b0aaff;
+  background: rgba(245,245,255,0.93);
+}
+.ucard-inner {
+  padding: 30px 26px 22px 26px;
+}
+.ucard-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+.ucard-avatar {
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+.ucard-info {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+.ucard-name {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: #1e2166;
+  margin-bottom: 2px;
+  line-height: 1.13;
+  letter-spacing: -.01em;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ucard-email {
+  font-size: 0.95rem;
+  color: #7474b0;
+  margin-bottom: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ucard-location,
+.ucard-company {
+  font-size: 0.92rem;
+  color: #b28eff;
+  margin-bottom: 1px;
+  display: flex; align-items: center; gap: 3px;
+}
+.ucard-company {
+  color: #6e7ce3;
+}
+.ucard-rating {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+  background: linear-gradient(90deg,#fde68a,#fdba74);
+  border-radius: 1.2em;
+  padding: 3px 9px;
+  font-size: 1.01rem;
+  font-weight: 700;
+  box-shadow: 0 1px 6px 0 rgba(255,215,64,0.07);
+}
+.ucard-star {
+  font-size: 1.1em;
+  margin-right: 3px;
+  color: #f59e42;
+}
+.ucard-rating-value {
+  color: #8a4f01;
+  font-size: 0.97em;
+}
+
+/* Skills Section */
+.ucard-skills-wrap {
+  margin-top: 18px;
+}
+.ucard-skill-block {
+  margin-bottom: 8px;
+}
+.ucard-skill-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.ucard-skill-title-offered { color: var(--ucard-green);}
+.ucard-skill-title-wanted { color: var(--ucard-primary);}
+.ucard-skill-list {
+  display: flex; flex-wrap: wrap; gap: 7px;
+}
+.ucard-skill-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px 3px 13px;
+  border-radius: 999px;
+  font-size: 0.93rem;
+  font-weight: 700;
+  line-height: 1.06;
+  background: #e0fce6;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  box-shadow: 0 1px 2px 0 rgba(80, 200, 140, 0.05);
+  letter-spacing: -.01em;
+  transition: background 0.18s, color 0.15s;
+  cursor: default;
+}
+.ucard-skill-offered { background: #e0fce6; color: #15803d; border: 1px solid #bbf7d0;}
+.ucard-skill-wanted { background: #e0eaff; color: #4659f6; border: 1px solid #a5b4fc;}
+.ucard-skill-more {
+  color: #a471ff;
+  font-size: 0.93rem;
+  padding-left: 7px;
+}
+
+/* Availability */
+.ucard-availability {
+  margin-top: 10px;
+}
+.ucard-availability-badge {
+  background: #fff8ea;
+  color: #be6e17;
+  font-weight: 600;
+  font-size: 0.97rem;
+  border-radius: 999px;
+  padding: 4px 17px 4px 14px;
+  display: inline-block;
+  box-shadow: 0 1px 6px 0 rgba(254,243,199,0.09);
+  border: 1px solid #fde68a;
+}
+
+/* Actions Section */
+.ucard-actions {
+  display: flex;
+  gap: 11px;
+  margin-top: 22px;
+}
+.ucard-actions-single {
+  justify-content: center;
+  gap: 0;
+}
+.ucard-btn {
+  font-size: 1.02rem;
+  font-weight: 700;
+  border-radius: 1.2em;
+  padding: 9px 22px;
+  border: none;
+  transition: background .16s, color .14s, box-shadow .17s, border .14s;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 2px 9px 0 rgba(90,90,210,0.05);
+  text-align: center;
+  display: inline-block;
+}
+.ucard-btn-view {
+  background: linear-gradient(90deg, #5c6fff 20%, #a471ff 100%);
+  color: #fff;
+  box-shadow: 0 2px 10px 0 rgba(100,90,255,0.13);
+}
+.ucard-btn-view:hover {
+  background: linear-gradient(90deg, #4051d7 20%, #7f43e7 100%);
+}
+.ucard-btn-add {
+  background: #16a34a;
+  color: #fff;
+}
+.ucard-btn-add:hover {
+  background: #15803d;
+}
+.ucard-btn-remove {
+  background: #f2f3ff;
+  color: #374151;
+  border: 1.5px solid #ddd;
+}
+.ucard-btn-remove:hover {
+  background: #f1eafe;
+  color: #a471ff;
+  border: 1.5px solid #a471ff;
+}
+.ucard-btn-block {
+  background: #fef2f2;
+  color: #ef4444;
+  font-size: 1.1em;
+}
+.ucard-btn-block:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.ucard-btn-edit {
+  background: linear-gradient(90deg, #5c6fff 20%, #a471ff 100%);
+  color: #fff;
+  padding: 11px 0;
+  width: 100%;
+}
+.ucard-btn-edit:hover {
+  background: linear-gradient(90deg, #4051d7 20%, #7f43e7 100%);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .ucard-inner { padding: 18px 8px 12px 8px; }
+  .ucard-row { flex-direction: column; gap: 10px;}
+  .ucard-actions { flex-direction: column; gap: 8px;}
+}
