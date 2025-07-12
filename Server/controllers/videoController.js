@@ -2,6 +2,7 @@ const Video = require('../models/Video');
 const User = require('../models/User');
 const cloudinary = require('../config/cloudinary');
 const { validateVideo } = require('../utils/fileValidator');
+const fs = require('fs').promises;
 
 // Get all videos
 const getVideos = async (req, res) => {
@@ -41,6 +42,8 @@ const uploadVideo = async (req, res) => {
       });
     }
 
+    console.log('Uploading video:', req.file.originalname, 'Size:', req.file.size);
+
     // Validate video file
     const validation = validateVideo(req.file);
     if (!validation.isValid) {
@@ -50,23 +53,28 @@ const uploadVideo = async (req, res) => {
       });
     }
 
-    // Upload video to Cloudinary
+    // Upload video to Cloudinary with proper configuration
     const uploadOptions = {
       folder: 'skill-learning/videos',
       resource_type: 'video',
       public_id: `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      chunk_size: 6000000, // 6MB chunks for large files
       eager: [
         { 
           width: 300, 
           height: 200, 
           crop: 'pad', 
           audio_codec: 'none', 
-          format: 'jpg' 
+          format: 'jpg',
+          resource_type: 'image'
         }
-      ]
+      ],
+      eager_async: true
     };
 
+    console.log('Starting Cloudinary upload...');
     const result = await cloudinary.uploader.upload(req.file.path, uploadOptions);
+    console.log('Cloudinary upload successful:', result.public_id);
 
     // Extract video metadata
     const duration = result.duration || 0;
@@ -89,6 +97,13 @@ const uploadVideo = async (req, res) => {
     const savedVideo = await newVideo.save();
     await savedVideo.populate('uploadedBy', 'name email');
 
+    // Clean up temporary file
+    try {
+      await fs.unlink(req.file.path);
+    } catch (cleanupError) {
+      console.warn('Failed to cleanup temp file:', cleanupError.message);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Video uploaded successfully',
@@ -96,9 +111,19 @@ const uploadVideo = async (req, res) => {
     });
   } catch (error) {
     console.error('Upload video error:', error);
+    
+    // Clean up temporary file on error
+    if (req.file && req.file.path) {
+      try {
+        await fs.unlink(req.file.path);
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup temp file on error:', cleanupError.message);
+      }
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Failed to upload video'
+      message: 'Failed to upload video: ' + error.message
     });
   }
 };

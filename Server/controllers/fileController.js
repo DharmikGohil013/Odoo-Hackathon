@@ -2,6 +2,7 @@ const File = require('../models/File');
 const User = require('../models/User');
 const cloudinary = require('../config/cloudinary');
 const { validateFile } = require('../utils/fileValidator');
+const fs = require('fs').promises;
 
 // Get all files
 const getFiles = async (req, res) => {
@@ -41,6 +42,8 @@ const uploadFile = async (req, res) => {
       });
     }
 
+    console.log('Uploading file:', req.file.originalname, 'Type:', req.file.mimetype, 'Size:', req.file.size);
+
     // Validate file
     const validation = validateFile(req.file);
     if (!validation.isValid) {
@@ -60,14 +63,25 @@ const uploadFile = async (req, res) => {
       return 'other';
     };
 
-    // Upload to Cloudinary
-    const uploadOptions = {
-      folder: 'skill-learning/files',
-      resource_type: 'auto',
-      public_id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    // Determine resource type for Cloudinary
+    const getResourceType = (mimetype) => {
+      if (mimetype.startsWith('image/')) return 'image';
+      if (mimetype.startsWith('video/')) return 'video';
+      return 'raw'; // For PDFs and other documents
     };
 
+    // Upload to Cloudinary with proper configuration
+    const uploadOptions = {
+      folder: 'skill-learning/files',
+      resource_type: getResourceType(req.file.mimetype),
+      public_id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      use_filename: true,
+      unique_filename: false
+    };
+
+    console.log('Starting Cloudinary upload with options:', uploadOptions);
     const result = await cloudinary.uploader.upload(req.file.path, uploadOptions);
+    console.log('Cloudinary upload successful:', result.public_id);
 
     // Create file record
     const newFile = new File({
@@ -85,6 +99,13 @@ const uploadFile = async (req, res) => {
     const savedFile = await newFile.save();
     await savedFile.populate('uploadedBy', 'name email');
 
+    // Clean up temporary file
+    try {
+      await fs.unlink(req.file.path);
+    } catch (cleanupError) {
+      console.warn('Failed to cleanup temp file:', cleanupError.message);
+    }
+
     res.status(201).json({
       success: true,
       message: 'File uploaded successfully',
@@ -92,9 +113,19 @@ const uploadFile = async (req, res) => {
     });
   } catch (error) {
     console.error('Upload file error:', error);
+    
+    // Clean up temporary file on error
+    if (req.file && req.file.path) {
+      try {
+        await fs.unlink(req.file.path);
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup temp file on error:', cleanupError.message);
+      }
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Failed to upload file'
+      message: 'Failed to upload file: ' + error.message
     });
   }
 };

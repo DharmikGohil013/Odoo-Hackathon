@@ -8,12 +8,16 @@ const socketIo = require('socket.io');
 
 const connectDB = require('./config/db');
 const errorMiddleware = require('./middleware/errorMiddleware');
+const { testCloudinaryConnection } = require('./utils/cloudinaryTest');
 
 // Load environment variables
 dotenv.config();
 
 // Connect to MongoDB
 connectDB();
+
+// Test Cloudinary connection
+testCloudinaryConnection();
 
 const app = express();
 const server = http.createServer(app);

@@ -40,15 +40,23 @@ function fileValidator(req, res, next) {
 
 // File validation utilities
 const validateFile = (file) => {
-  const maxSize = 10 * 1024 * 1024; // 10MB
+  const maxSize = 25 * 1024 * 1024; // Increased to 25MB for larger PDFs
   const allowedMimeTypes = [
-    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-    'application/pdf', 'text/plain', 'application/msword',
+    // Images
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff',
+    // Documents
+    'application/pdf',
+    'text/plain', 'text/csv',
+    'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    // Archives
+    'application/zip',
+    'application/x-rar-compressed',
+    'application/x-7z-compressed'
   ];
 
   if (!file) {
@@ -61,14 +69,15 @@ const validateFile = (file) => {
   if (file.size > maxSize) {
     return {
       isValid: false,
-      error: 'File size must be less than 10MB'
+      error: 'File size must be less than 25MB'
     };
   }
 
   if (!allowedMimeTypes.includes(file.mimetype)) {
+    console.log('Unsupported file type:', file.mimetype);
     return {
       isValid: false,
-      error: 'File type not supported'
+      error: `File type ${file.mimetype} not supported. Supported types: PDF, images, documents, spreadsheets, presentations`
     };
   }
 
@@ -79,10 +88,11 @@ const validateFile = (file) => {
 
 // Video validation
 const validateVideo = (file) => {
-  const maxSize = 50 * 1024 * 1024; // 50MB
+  const maxSize = 100 * 1024 * 1024; // Increased to 100MB for larger videos
   const allowedMimeTypes = [
     'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo',
-    'video/x-ms-wmv', 'video/x-flv', 'video/webm'
+    'video/x-ms-wmv', 'video/x-flv', 'video/webm', 'video/ogg',
+    'video/3gpp', 'video/x-m4v', 'video/mov'
   ];
 
   if (!file) {
@@ -95,14 +105,15 @@ const validateVideo = (file) => {
   if (file.size > maxSize) {
     return {
       isValid: false,
-      error: 'Video file size must be less than 50MB'
+      error: 'Video file size must be less than 100MB'
     };
   }
 
   if (!allowedMimeTypes.includes(file.mimetype)) {
+    console.log('Unsupported video type:', file.mimetype);
     return {
       isValid: false,
-      error: 'Video file type not supported'
+      error: `Video file type ${file.mimetype} not supported. Supported formats: MP4, WebM, MOV, AVI, etc.`
     };
   }
 
