@@ -148,75 +148,18 @@ const FileLearningPage = () => {
 
   const handleDownload = async (fileId, filename) => {
     try {
-      console.log('Downloading file:', fileId, filename);
-      
-      // Try to get the download URL first
-      try {
-        const urlResponse = await fileService.getDownloadUrl(fileId);
-        const downloadData = urlResponse.data;
-        
-        console.log('Download data:', downloadData);
-        
-        // Create download link
-        const link = document.createElement('a');
-        link.href = downloadData.downloadUrl;
-        link.download = downloadData.filename || filename || 'download';
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        
-        // Trigger download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        showSuccess('Download started');
-        return;
-      } catch (urlError) {
-        console.log('Download URL endpoint failed, trying direct method:', urlError.message);
-      }
-      
-      // Fallback: Get file details and use cloudinary URL
-      try {
-        const fileResponse = await fileService.getFile(fileId);
-        const file = fileResponse.data;
-        
-        if (file.cloudinaryUrl) {
-          const link = document.createElement('a');
-          link.href = file.cloudinaryUrl;
-          link.download = filename || file.originalName || file.title;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          showSuccess('Download started');
-        } else {
-          throw new Error('No download URL available');
-        }
-      } catch (fileError) {
-        console.error('File details fetch failed:', fileError);
-        
-        // Last resort: try blob download
-        try {
-          const response = await fileService.downloadFile(fileId);
-          const blob = new Blob([response.data]);
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = filename || 'download';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-          showSuccess('File downloaded successfully');
-        } catch (blobError) {
-          console.error('Blob download failed:', blobError);
-          showError('Download failed. Please try the direct download button (⬇️) or open in new tab.');
-        }
-      }
+      const response = await fileService.downloadFile(fileId);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showSuccess('File downloaded successfully');
     } catch (error) {
-      console.error('Download error:', error);
-      showError('Failed to download file. Please try opening the file in a new tab.');
+      showError('Failed to download file');
     }
   };
 
@@ -379,22 +322,11 @@ const FileLearningPage = () => {
                 </button>
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => handleDownload(file._id, file.originalName || file.title)}
+                    onClick={() => handleDownload(file._id, file.title)}
                     className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                   >
                     Download
                   </button>
-                  {/* Direct download link as backup */}
-                  <a
-                    href={file.cloudinaryUrl}
-                    download={file.originalName || file.title}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm text-center"
-                    title="Direct download"
-                  >
-                    ⬇️
-                  </a>
                   {file.uploadedBy?._id === user._id && (
                     <button
                       onClick={() => handleDelete(file._id)}

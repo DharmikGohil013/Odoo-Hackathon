@@ -179,49 +179,13 @@ const downloadFile = async (req, res) => {
     file.downloads += 1;
     await file.save();
 
-    // Set proper headers for download
-    res.setHeader('Content-Disposition', `attachment; filename="${file.originalName}"`);
-    res.setHeader('Content-Type', file.mimetype);
-    
-    // For direct file serving, redirect to Cloudinary URL
-    // This allows the browser to handle the download properly
+    // Redirect to Cloudinary URL for download
     res.redirect(file.cloudinaryUrl);
   } catch (error) {
     console.error('Download file error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to download file'
-    });
-  }
-};
-
-// Get download URL
-const getDownloadUrl = async (req, res) => {
-  try {
-    const file = await File.findById(req.params.id);
-
-    if (!file) {
-      return res.status(404).json({
-        success: false,
-        message: 'File not found'
-      });
-    }
-
-    // Return the download URL and file info
-    res.status(200).json({
-      success: true,
-      data: {
-        downloadUrl: file.cloudinaryUrl,
-        filename: file.originalName,
-        mimetype: file.mimetype,
-        size: file.size
-      }
-    });
-  } catch (error) {
-    console.error('Get download URL error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get download URL'
     });
   }
 };
@@ -404,7 +368,6 @@ module.exports = {
   uploadFile,
   getFile,
   downloadFile,
-  getDownloadUrl,
   deleteFile,
   getFilesByType,
   searchFiles,

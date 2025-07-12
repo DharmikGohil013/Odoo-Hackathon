@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import UserLayout from '../layouts/UserLayout';
 import HomePage from '../pages/HomePage';
+import HeroPage from '../pages/HeroPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProfilePage from '../pages/ProfilePage';
@@ -82,7 +83,8 @@ const UserRoutes = () => {
           <UserLayout />
         </ProtectedRoute>
       }>
-        <Route index element={<HomePage />} />
+        <Route index element={<HeroPage />} />
+        <Route path="dashboard" element={<HomePage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/:userId" element={<OtherProfilePage />} />
         <Route path="swap-request" element={<SwapRequestForm />} />
@@ -91,7 +93,7 @@ const UserRoutes = () => {
         <Route path="groups" element={<GroupPage />} />
         <Route path="groups/create" element={<CreateGroupPage />} />
         <Route path="groups/:groupId" element={<GroupDetailPage />} />
-        <Route path="recommendations" element={<RecommendationPage />} />
+        <Route path="recommendations" element={<HomePage />} />
         <Route path="upload" element={<MediaUploadPage />} />
         <Route path="avatar-test" element={<AvatarTest />} />
         <Route path="skill-learning" element={<SkillLearningPage />} />

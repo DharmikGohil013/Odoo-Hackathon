@@ -27,12 +27,6 @@ export const fileService = {
     return response;
   },
 
-  // Get download URL
-  getDownloadUrl: async (fileId) => {
-    const response = await api.get(`${API_BASE}/${fileId}/download-url`);
-    return response.data;
-  },
-
   // Delete file
   deleteFile: async (fileId) => {
     const response = await api.delete(`${API_BASE}/${fileId}`);
