@@ -68,7 +68,7 @@ const HeroPage = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              Welcome to SkillSwap
+              Welcome to LearnLink
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400">
               Hello, {user?.name}! Ready to exchange knowledge?
@@ -98,7 +98,7 @@ const HeroPage = () => {
                 onClick={() => navigate('/swap-request')}
                 className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold text-lg shadow-lg"
               >
-                Start Skill Swap
+                Start Learning
               </button>
               <button
                 onClick={() => navigate('/skill-learning')}
@@ -157,7 +157,7 @@ const HeroPage = () => {
         {/* How It Works Section */}
         <div className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-md rounded-3xl p-8 mb-8 border border-white/30 dark:border-gray-700/30">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white text-center mb-8">
-            How SkillSwap Works
+            How LearnLink Works
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">

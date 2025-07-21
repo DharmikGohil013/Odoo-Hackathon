@@ -1,12 +1,12 @@
-# SkillSwap Client
+# LearnLink Client
 
-A React-based web application for skill swapping platform where users can exchange skills with each other.
+A React-based web application for skill learning platform where users can connect and learn skills from each other.
 
 ## Features
 
 - **User Authentication**: Login and registration
 - **Profile Management**: Update profile, skills, and privacy settings
-- **Skill Swapping**: Send and manage skill swap requests
+- **Skill Learning**: Connect with others and learn new skills
 - **Social Features**: Add friends, join groups
 - **Recommendations**: Get personalized user recommendations
 - **Media Upload**: Upload profile photos and other media
@@ -77,12 +77,12 @@ The application integrates with the following APIs:
 - `POST /api/users/:id/block` - Block user
 - `DELETE /api/users/:id/block` - Unblock user
 
-### Skill Swaps
-- `POST /api/swaps` - Send swap request
+### Learning Connections
+- `POST /api/swaps` - Send learning request
 - `GET /api/swaps/incoming` - Get incoming requests
 - `GET /api/swaps/outgoing` - Get outgoing requests
-- `POST /api/swaps/:id/accept` - Accept swap request
-- `POST /api/swaps/:id/reject` - Reject swap request
+- `POST /api/swaps/:id/accept` - Accept learning request
+- `POST /api/swaps/:id/reject` - Reject learning request
 - `DELETE /api/swaps/:id/cancel` - Cancel swap request
 
 ### Groups

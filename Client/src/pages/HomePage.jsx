@@ -102,7 +102,7 @@ const HomePage = () => {
             <div className="absolute inset-0 rounded-full border-4 border-indigo-200 dark:border-indigo-800"></div>
             <div className="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
           </div>
-          <p className="text-lg font-medium text-gray-700 dark:text-gray-300">Loading SkillSwap...</p>
+          <p className="text-lg font-medium text-gray-700 dark:text-gray-300">Loading LearnLink...</p>
         </div>
       </div>
     );
@@ -114,7 +114,7 @@ const HomePage = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Welcome to SkillSwap</h1>
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Welcome to LearnLink</h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">Connect, Learn, and Share Skills with Amazing People</p>
           </div>
           <button
@@ -174,7 +174,7 @@ const HomePage = () => {
 
         {/* Quick Actions */}
         <div className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-md rounded-2xl p-8 mb-8 border border-white/30 dark:border-gray-700/30">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Start Your SkillSwap Journey</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Start Your LearnLink Journey</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Link
               to="/swap-request"
